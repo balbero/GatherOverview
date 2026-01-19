@@ -1,0 +1,47 @@
+## Interface: 120000, 110207, 110205, 50502, 11508
+## Title: GatherOverview
+## Version: 001
+## Author: faelgorn
+## SavedVariables: GATHEROVERVIEW_CONFIG
+## SavedVariablesPerCharacter: GATHEROVERVIEW_CURRENT_PROFILE, GATHEROVERVIEW_LAST_INSTANCE
+
+## Category: Professions
+## Category-deDE: Berufe
+## Category-esES: Profesiones
+## Category-esMX: Profesiones
+## Category-frFR: Métiers
+## Category-itIT: Professioni
+## Category-koKR: 전문 기술
+## Category-ptBR: Profissões
+## Category-ruRU: Профессии
+## Category-zhCN: 专业技能
+## Category-zhTW: 專業技能
+
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\AceAddon-3.0\AceAddon-3.0.xml
+Libs\AceEvent-3.0\AceEvent-3.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\LibSharedMedia-3.0\lib.xml
+
+Locales.lua
+
+Core/Objects.lua
+Core/Locales.lua
+Core/ItemDB.lua
+
+Utils/Colors.lua
+Utils/Utilities.lua
+
+Core/Config.lua
+Core/SlashCmd.lua
+Core/Core.lua
+
+Components/Component.lua
+
+OptionDialog/Initialize.lua
+OptionDialog/GeneralPanel.lua
+OptionDialog/ProfilePanel.lua
+
+MainFrame/MainFrame.lua
