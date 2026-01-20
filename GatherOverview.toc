@@ -1,7 +1,9 @@
 ## Interface: 120000, 110207, 110205, 50502, 11508
 ## Title: GatherOverview
-## Version: 001
+## Version: 0.0.1
 ## Author: faelgorn
+## Notes: Provides an overview of gathered resources.
+## Notes-frFR: Fournit une vue d'ensemble des ressources récoltées.
 ## SavedVariables: GATHEROVERVIEW_CONFIG
 ## SavedVariablesPerCharacter: GATHEROVERVIEW_CURRENT_PROFILE, GATHEROVERVIEW_LAST_INSTANCE
 

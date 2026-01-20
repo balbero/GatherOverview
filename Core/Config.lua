@@ -8,7 +8,7 @@ addonTable.Config.Defaults = {}
 local settings = {
     SHOW_BUTTON = { key="ShowMapButton", default = true },
     FONT = { key="Font", default = "Friz Quadrata TT" },
-    BG_ALPHA = { key="BackgroundAlpha", default = 0.8 },
+    BG_COLOR = { key="BackgroundColor", default = {r = .2, b = .2, g = .2, a = 0.2} },
     BORDER = { key="BorderColor", default = addonTable.Colors.black },
     SHOW_IN_INSTANCES = { key="ShowInInstances", default = false },
     PROFESSIONS = { key="Professions", default = {

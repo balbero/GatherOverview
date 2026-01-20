@@ -89,6 +89,7 @@ function panel:SetupGeneral()
         medColorFrame:SetColor(med_color.r, med_color.g, med_color.b, med_color.a)
         medColorFrame:SetCallback("OnValueChanged",  function(_, _, newr, newg, newb, newa)
             if not prof then prof = {} end
+            if prof.medium_color ~= nil and prof.medium_color == {r = newr, g = newg, b = newb, a = newa} then return end
             prof.medium_color = {r = newr, g = newg, b = newb, a = newa}
             addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
         end)

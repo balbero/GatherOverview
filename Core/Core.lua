@@ -31,6 +31,7 @@ end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("SKILL_LINES_CHANGED")
 frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 frame:RegisterEvent("BAG_UPDATE_DELAYED")
@@ -43,8 +44,9 @@ frame:SetScript("OnEvent", function(_, eventName, data)
   elseif eventName == "ZONE_CHANGED_NEW_AREA" then
     -- Player change zone
     addonTable.MainFrame.ToggleIfNeeded()
-  elseif eventName == "BAG_UPDATE_DELAYED" then
+  elseif eventName == "BAG_UPDATE_DELAYED" or eventName == "PLAYER_LOGIN" then
+    addonTable.MainFrame.ScanBags()
     -- Update Item count display
-    addonTable.MainFrame.RefreshLabels()
+    addonTable.MainFrame.UpdateUI()
   end
 end)

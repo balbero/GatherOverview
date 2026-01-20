@@ -4,10 +4,14 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 addonTable.MainFrame = {}
 addonTable.MainFrame.labels = {}
+addonTable.MainFrame.Counts = {}
 
 local itemsPerRow = 3  -- Nombre d'icônes par ligne
 local iconSize = 32    -- Taille des icônes
 local itemWidth = 50   -- Largeur par item (icône + label)
+local headerHeight = 20
+local iconSpacingX = 10
+local iconSpacingY = 10
 
 function addonTable.MainFrame.RefreshLabels()
     for itemID, data in pairs(addonTable.MainFrame.labels) do
@@ -51,62 +55,67 @@ function addonTable.MainFrame.ToggleIfNeeded()
     end
 end
 
-function addonTable.MainFrame.Initialize()
-    -- Créer le frame principal
-    local frame = AceGUI:Create("Frame")
-    frame:SetLayout("List")  -- Changé de "Fill" à "List" pour empiler plusieurs enfants verticalement
-    frame:SetWidth(600)  -- Largeur fixe plus grande pour accommoder deux professions côte à côte
-    
-    frame.frame:SetFrameStrata("LOW")  -- Réduire le z-level pour que la frame soit derrière d'autres éléments UI
+function addonTable.MainFrame.ScanBags()
+    wipe(addonTable.MainFrame.Counts)
 
-    -- Configurer l'arrière-plan sans bordure, avec opacité de BG_ALPHA
-    local alpha = addonTable.Config.Get("BackgroundAlpha")
-    frame.frame:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = nil,  -- Pas de bordure
+    for category, itemList in pairs(addonTable.ItemDB) do
+        addonTable.MainFrame.Counts[category] = {}
+        for _, itemData in ipairs(itemList) do
+            local itemId = itemData.id
+            local count = C_Item.GetItemCount(itemId)
+            table.insert(addonTable.MainFrame.Counts[category], {itemId, count, itemData})
+        end
+    end
+end
+
+function addonTable.MainFrame.Initialize()
+    local header_size = 12
+    -- Create the Main panel
+    local frame = CreateFrame("frame", "GatherOverview_MainFrame", UIParent, "BackdropTemplate")
+    frame:SetPoint("TOP", UIParent, "TOP", 0, -110)
+	frame:SetSize(addonTable.Config.Get("width") or 600, addonTable.Config.Get("height") or 800)
+    frame:SetBackdrop(
+    {
+        bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
         tile = true,
-        tileSize = 0,
-        edgeSize = 0,
-        insets = { left = 0, right = 0, top = 0, bottom = 0 }
+        tileSize = 16,
+        insets = {
+            left = 0,
+            right = 0,
+            top = 0,
+            bottom = 0}
     })
-    frame.frame:SetBackdropColor(0, 0, 0, 1-alpha)  -- Arrière-plan noir avec alpha
-    frame:SetTitle(addonTable.Locales.GATHER_OVERVIEW)
+    local bg_color = addonTable.Config.Get(addonTable.Config.Options.BG_COLOR)
+    frame:SetBackdropColor(bg_color.r, bg_color.g, bg_color.b, bg_color.a)
+    frame:EnableMouse(true)
+    frame:SetMovable(true)
+    frame:SetClampedToScreen(true) -- frame cannot move outside the screen
+    
+    frame:SetFrameStrata("BACKGROUND")  -- reduce the z-level to be behind wow UI element
+
+    local TitleString = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    TitleString:SetPoint("TOP", frame, "TOP", 0, -5)
+    TitleString:SetText(addonTable.Locales.GATHER_OVERVIEW)
+    addonTable.Utilities.SetFontSize(TitleString, 9)
+    local TitleBackground = frame:CreateTexture(nil, "ARTWORK")
+    TitleBackground:SetTexture([[Interface\Tooltips\UI-Tooltip-Background]])
+    TitleBackground:SetVertexColor(.1, .1, .1, .9)
+    TitleBackground:SetVertexColor(.1, .1, .1, 0)
+    TitleBackground:SetPoint("TOPLEFT", frame, "TOPLEFT")
+    TitleBackground:SetPoint("TOPRIGHT", frame, "TOPRIGHT")
+    TitleBackground:SetHeight(header_size)
 
     local professionsConfig = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
 
     local showFrame = professionsConfig.MINING.enabled or professionsConfig.HERBALISM.enabled or professionsConfig.SKINNING.enabled or professionsConfig.FISHING.enabled
 
-    local miningHerbsGroup = AceGUI:Create("SimpleGroup")
-    miningHerbsGroup:SetLayout("Flow")
-    miningHerbsGroup:SetFullWidth(true)  -- Assurer que le groupe prend toute la largeur
-    if professionsConfig.MINING.enabled then
-        local miningFrame = addonTable.MainFrame.CreateMiningItemsFrame()
-        miningHerbsGroup:AddChild(miningFrame)
-    end
-    if professionsConfig.HERBALISM.enabled then
-        local herbalismFrame = addonTable.MainFrame.CreateHerbalismItemsFrame()
-        miningHerbsGroup:AddChild(herbalismFrame)
-    end
-    miningHerbsGroup:DoLayout()
-    frame:AddChild(miningHerbsGroup)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", frame.StartMoving)
+    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
     
-    local skinningFishGroup = AceGUI:Create("SimpleGroup")
-    skinningFishGroup:SetLayout("Flow")
-    skinningFishGroup:SetFullWidth(true)  -- Assurer que le groupe prend toute la largeur
-    if professionsConfig.SKINNING.enabled then
-        local skinningFrame = addonTable.MainFrame.CreateSkinningItemsFrame()
-        skinningFishGroup:AddChild(skinningFrame)
-    end
-    if professionsConfig.FISHING.enabled then
-        local fishingFrame = addonTable.MainFrame.CreateFishingItemsFrame()
-        skinningFishGroup:AddChild(fishingFrame)
-    end
-    skinningFishGroup:DoLayout()
-    frame:AddChild(skinningFishGroup)
-    
-    frame:DoLayout()
-
     addonTable.MainFrame.frame = frame
+    addonTable.MainFrame.icons = { }
+    addonTable.MainFrame.headers = { }
     if showFrame then
         frame:Show()
     else
@@ -114,172 +123,93 @@ function addonTable.MainFrame.Initialize()
     end
 end
 
-function addonTable.MainFrame.CreateItemGroup(itemID, professionName)
-    local itemGroup = AceGUI:Create("SimpleGroup")
-    itemGroup:SetLayout("List")  -- Vertical : icône puis label
-    itemGroup:SetWidth(itemWidth)
-    itemGroup:SetHeight(iconSize + 15)
+function addonTable.MainFrame.CreateIcon(parent, itemId, quality)
+    local button = CreateFrame("Frame", nil, parent)
+    button:SetSize(iconSize, iconSize)
 
-    -- Sous-groupe pour centrer l'icône horizontalement
-    local iconGroup = AceGUI:Create("SimpleGroup")
-    iconGroup:SetLayout("Flow")  -- Horizontal pour les spacers et l'icône
-    iconGroup:SetHeight(iconSize + 15)  -- Hauteur réduite
-    iconGroup:SetFullWidth(true)
+    local icon = button:CreateTexture(nil, "ARTWORK")
+    icon:SetAllPoints()
+    icon:SetTexture(C_Item.GetItemIconByID(itemId))
 
-    -- Spacer gauche pour centrer
-    local spacerLeft = AceGUI:Create("SimpleGroup")
-    spacerLeft:SetWidth(math.floor((itemWidth - iconSize) / 2))
-    iconGroup:AddChild(spacerLeft)
+    local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    text:SetPoint("TOP", button, "BOTTOM", 0, -5)
 
-    -- Icône de l'item
-    local icon = AceGUI:Create("Icon")
-    icon:SetImage(C_Item.GetItemIconByID(itemID))  -- Récupère l'icône via l'API WoW
-    icon:SetImageSize(iconSize, iconSize)
-    iconGroup:AddChild(icon)
-    
-    -- Spacer droite pour centrer
-    local spacerRight = AceGUI:Create("SimpleGroup")
-    spacerRight:SetWidth((itemWidth - iconSize) / 2)
-    iconGroup:AddChild(spacerRight)
+    button.icon = icon
+    button.text = text
 
-    itemGroup:AddChild(iconGroup)
-
-    -- Label pour le nombre d'objets
-    local label = AceGUI:Create("Label")
-    local count = C_Item.GetItemCount(itemID)  -- Nombre dans les sacs
-    label:SetText(tostring(count))
-    label:SetJustifyH("CENTER")  -- Centrer le texte
-    label:SetWidth(itemWidth)
-
-    addonTable.MainFrame.labels[itemID] = {label = label, prof = professionName}
-
-    -- Couleur basée sur les seuils du profil courant
-    local color = addonTable.Colors.GetColorForValue(professionName, count)
-    label:SetColor(color.r, color.g, color.b, color.a)
-
-    itemGroup:AddChild(label)
-    return itemGroup
+    return button
 end
 
--- Fonction pour créer le frame des items de minage
-function addonTable.MainFrame.CreateMiningItemsFrame()
-    -- Conteneur principal pour la grille
-    local mainContainer = AceGUI:Create("SimpleGroup")
-    mainContainer:SetLayout("List")  -- Empilement vertical des lignes
-    mainContainer:SetFullWidth(true)
+function addonTable.MainFrame.UpdateUI()
+    if not addonTable.MainFrame.frame then
+        addonTable.MainFrame.Initialize()
+    end
+    local currentY = -10
 
-    -- Paramètres de la grille
-    local rowContainer
-
-    -- Boucle sur les items de MINING
-    for i, itemID in ipairs(addonTable.ItemDB.MINING) do
-        if C_Item.GetItemInfo(itemID) then
-            -- Créer une nouvelle ligne si nécessaire
-            if (i - 1) % itemsPerRow == 0 then
-                rowContainer = AceGUI:Create("SimpleGroup")
-                rowContainer:SetLayout("Flow")  -- Disposition horizontale dans la ligne
-                rowContainer:SetFullWidth(true)
-                mainContainer:AddChild(rowContainer)
+    local professionSeting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
+    for category, itemData in pairs(addonTable.MainFrame.Counts) do
+        local professionTranslation = addonTable.ProfessionTranslate[category]
+        local display = false
+        -- Check if the category (i.E the profession) is enabled in the curent profile
+        for _, prof in pairs(professionSeting) do
+            if professionTranslation == prof.name then
+                display = prof.enabled
+                break
             end
+        end
+        if display then
+             -- Create header if not exists
+            if not addonTable.MainFrame.headers[category] then
+                local header = addonTable.MainFrame.frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                header:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", 10, currentY)
+                header:SetText(professionTranslation)
+                addonTable.MainFrame.headers[category] = header
+            else
+                addonTable.MainFrame.headers[category]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", 10, currentY)
+                addonTable.MainFrame.headers[category]:Show()
+            end
+            currentY = currentY - headerHeight
+            local rowY = currentY
+            local col = 0
 
-            -- Groupe pour chaque item (icône + label verticalement)
-            local itemGroup = addonTable.MainFrame.CreateItemGroup(itemID, addonTable.Locales.MINING)
-            -- Ajouter le groupe d'item à la ligne
-            rowContainer:AddChild(itemGroup)
+            for _, info in ipairs(itemData) do
+                -- info[1] => item id
+                -- info[2] => cont in bags
+                -- info[3] => item contains quality and extension
+                if C_Item.GetItemInfo(info[1]) then
+                    if not addonTable.MainFrame.icons[info[1]] then
+                        addonTable.MainFrame.icons[info[1]] = addonTable.MainFrame.CreateIcon(addonTable.MainFrame.frame, info[1], info[3].quality)
+                    end
+                    local x = 10 + col * (iconSize + iconSpacingX)
+                    addonTable.MainFrame.icons[info[1]]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", x, rowY)
+                    addonTable.MainFrame.icons[info[1]]:Show()
+                    addonTable.MainFrame.icons[info[1]].text:SetText(info[2])
+                    local colorForProfession = addonTable.Colors.GetColorForValue(professionTranslation, info[2])
+                    addonTable.MainFrame.icons[info[1]].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
+                    col = col + 1
+                    if col >= itemsPerRow then
+                        col = 0
+                        rowY = rowY - (iconSize + 20)  -- Approximate height for icon + text
+                    end
+                end
+            end
+            -- Update currentY for next category
+            if col > 0 then
+                currentY = rowY - (iconSize + 20)
+            else
+                currentY = rowY
+            end
+        else
+            -- Hide header if exists
+            if addonTable.MainFrame.headers[category] then
+                addonTable.MainFrame.headers[category]:Hide()
+            end
+            -- Hide icons for this category
+            for _, info in pairs(itemData) do
+                if addonTable.MainFrame.icons[info[1]] then
+                    addonTable.MainFrame.icons[info[1]]:Hide()
+                end
+            end
         end
     end
-
-    return mainContainer
-end
-
--- Fonction pour créer le frame des items d'herboristerie
-function addonTable.MainFrame.CreateHerbalismItemsFrame()
-    -- Conteneur principal pour la grille
-    local mainContainer = AceGUI:Create("SimpleGroup")
-    mainContainer:SetLayout("List")  -- Empilement vertical des lignes
-    mainContainer:SetFullWidth(true)
-
-    -- Paramètres de la grille
-    local rowContainer
-
-    -- Boucle sur les items de HERBALISM
-    for i, itemID in ipairs(addonTable.ItemDB.HERBALISM) do
-        if C_Item.GetItemInfo(itemID) then
-            -- Créer une nouvelle ligne si nécessaire
-            if (i - 1) % itemsPerRow == 0 then
-                rowContainer = AceGUI:Create("SimpleGroup")
-                rowContainer:SetLayout("Flow")  -- Disposition horizontale dans la ligne
-                rowContainer:SetFullWidth(true)
-                mainContainer:AddChild(rowContainer)
-            end
-
-            local itemGroup = addonTable.MainFrame.CreateItemGroup(itemID, addonTable.Locales.HERBALISM)
-
-            -- Ajouter le groupe d'item à la ligne
-            rowContainer:AddChild(itemGroup)
-        end
-    end
-
-    return mainContainer
-end
-
--- Fonction pour créer le frame des items de dépeçage
-function addonTable.MainFrame.CreateSkinningItemsFrame()
-
-    -- Conteneur principal pour la grille
-    local mainContainer = AceGUI:Create("SimpleGroup")
-    mainContainer:SetLayout("List")  -- Empilement vertical des lignes
-    mainContainer:SetFullWidth(true)
-
-    -- Paramètres de la grille
-    local rowContainer
-
-    -- Boucle sur les items de SKINNING
-    for i, itemID in ipairs(addonTable.ItemDB.SKINNING) do
-        if C_Item.GetItemInfo(itemID) then
-            -- Créer une nouvelle ligne si nécessaire
-            if (i - 1) % itemsPerRow == 0 then
-                rowContainer = AceGUI:Create("SimpleGroup")
-                rowContainer:SetLayout("Flow")  -- Disposition horizontale dans la ligne
-                rowContainer:SetFullWidth(true)
-                mainContainer:AddChild(rowContainer)
-            end
-            local itemGroup = addonTable.MainFrame.CreateItemGroup(itemID, addonTable.Locales.SKINNING)
-
-            -- Ajouter le groupe d'item à la ligne
-            rowContainer:AddChild(itemGroup)
-        end
-    end
-
-    return mainContainer
-end
-
--- Fonction pour créer le frame des items de dépeçage
-function addonTable.MainFrame.CreateFishingItemsFrame()
-    -- Conteneur principal pour la grille
-    local mainContainer = AceGUI:Create("SimpleGroup")
-    mainContainer:SetLayout("List")  -- Empilement vertical des lignes
-    mainContainer:SetFullWidth(true)
-
-    -- Paramètres de la grille
-    local rowContainer
-
-    -- Boucle sur les items de FISHING
-    for i, itemID in ipairs(addonTable.ItemDB.FISHING) do
-        if C_Item.GetItemInfo(itemID) then
-            -- Créer une nouvelle ligne si nécessaire
-            if (i - 1) % itemsPerRow == 0 then
-                rowContainer = AceGUI:Create("SimpleGroup")
-                rowContainer:SetLayout("Flow")  -- Disposition horizontale dans la ligne
-                rowContainer:SetFullWidth(true)
-                mainContainer:AddChild(rowContainer)
-            end
-
-            local itemGroup = addonTable.MainFrame.CreateItemGroup(itemID, addonTable.Locales.FISHING)
-
-            -- Ajouter le groupe d'item à la ligne
-            rowContainer:AddChild(itemGroup)
-        end
-    end
-    return mainContainer
 end
