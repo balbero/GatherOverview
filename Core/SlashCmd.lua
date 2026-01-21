@@ -15,8 +15,6 @@ end
 
 local COMMANDS = {
   [""] = addonTable.SlashCmd.CustomiseUI,
-  ["c"] = addonTable.SlashCmd.Config,
-  ["config"] = addonTable.SlashCmd.Config,
   ["reset"] = addonTable.SlashCmd.Reset,
   [addonTable.Locales.SLASH_RESET] = addonTable.SlashCmd.Reset,
 }
@@ -24,6 +22,12 @@ local HELP = {
   {"", addonTable.Locales.SLASH_HELP},
   {addonTable.Locales.SLASH_RESET, addonTable.Locales.SLASH_RESET_HELP},
 }
+
+function addonTable.SlashCmd.CustomiseUI()
+  if addonTable.OptionDialog.ABOUT and addonTable.OptionDialog.ABOUT:IsShown() == false then
+    addonTable.OptionDialog.ABOUT:Show()
+  end
+end
 
 function addonTable.SlashCmd.Handler(input)
   local split = {strsplit("\a", (input:gsub("%s+","\a")))}
