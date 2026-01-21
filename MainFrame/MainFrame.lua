@@ -28,6 +28,11 @@ function addonTable.MainFrame.ToggleIfNeeded()
         addonTable.MainFrame.frame:Hide()
         return
     end
+    -- Hide entirely if not running on Retail
+    if not addonTable.Constants.IsRetail then
+        if addonTable.MainFrame.frame then addonTable.MainFrame.frame:Hide() end
+        return
+    end
     local mapID = C_Map.GetBestMapForUnit("player")
     -- Check upon the blacklisted zone ID
     -- if mapID is in the blacklist
@@ -57,13 +62,21 @@ end
 
 function addonTable.MainFrame.ScanBags()
     wipe(addonTable.MainFrame.Counts)
+    -- Do nothing if not retail
+    if not addonTable.Constants.IsRetail then return end
 
+    local isMidnight = addonTable.Constants.IsMidnight
     for category, itemList in pairs(addonTable.ItemDB) do
         addonTable.MainFrame.Counts[category] = {}
         for _, itemData in ipairs(itemList) do
             local itemId = itemData.id
-            local count = C_Item.GetItemCount(itemId)
-            table.insert(addonTable.MainFrame.Counts[category], {itemId, count, itemData})
+            local ext = itemData.extension
+            -- If Midnight build: only include items with extension MN
+            -- Otherwise include items that are not MN
+            if (isMidnight and ext == addonTable.Constants.EXT_MN) or (not isMidnight and ext ~= addonTable.Constants.EXT_MN) then
+                local count = C_Item.GetItemCount(itemId)
+                table.insert(addonTable.MainFrame.Counts[category], {itemId, count, itemData})
+            end
         end
     end
 end
@@ -131,9 +144,25 @@ function addonTable.MainFrame.CreateIcon(parent, itemId, quality)
     icon:SetAllPoints()
     icon:SetTexture(C_Item.GetItemIconByID(itemId))
 
+    -- Quality
+    -- Bronze: |A:Professions-ChatIcon-Quality-Tier1:17:15::1|a
+    -- Silver: |A:Professions-ChatIcon-Quality-Tier2:17:23::1|a
+    -- Gold: |A:Professions-ChatIcon-Quality-Tier3:17:18::1|a
+    if quality ~= 0 then
+        local qualityText = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        qualityText:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
+        if quality == 1 then
+            qualityText:SetText("|A:Professions-ChatIcon-Quality-Tier1:17:15::1|a")
+        elseif quality == 2 then
+            qualityText:SetText("|A:Professions-ChatIcon-Quality-Tier2:17:23::1|a")
+        elseif quality == 3 then
+            qualityText:SetText("|A:Professions-ChatIcon-Quality-Tier3:17:18::1|a")
+        end
+    end
+
     local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     text:SetPoint("TOP", button, "BOTTOM", 0, -5)
-
+    
     button.icon = icon
     button.text = text
 
@@ -144,6 +173,18 @@ function addonTable.MainFrame.UpdateUI()
     if not addonTable.MainFrame.frame then
         addonTable.MainFrame.Initialize()
     end
+    -- If not retail, hide and skip drawing
+    if not addonTable.Constants.IsRetail then
+        addonTable.MainFrame.frame:Hide()
+        return
+    end
+    local inInstance, _ = IsInInstance()
+    if inInstance and addonTable.Config.Get("ShowInInstances") == false then
+        addonTable.MainFrame.frame:Hide()
+        return
+    end
+
+    
     local currentY = -10
 
     local professionSeting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
