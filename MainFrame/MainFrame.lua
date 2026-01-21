@@ -8,10 +8,10 @@ addonTable.MainFrame.Counts = {}
 
 local itemsPerRow = 3  -- Nombre d'icônes par ligne
 local iconSize = 32    -- Taille des icônes
-local itemWidth = 50   -- Largeur par item (icône + label)
 local headerHeight = 20
 local iconSpacingX = 10
-local iconSpacingY = 10
+local sectionWidth = 180
+local sectionXSpacing = 10
 
 function addonTable.MainFrame.RefreshLabels()
     for itemID, data in pairs(addonTable.MainFrame.labels) do
@@ -129,6 +129,7 @@ function addonTable.MainFrame.Initialize()
     addonTable.MainFrame.frame = frame
     addonTable.MainFrame.icons = { }
     addonTable.MainFrame.headers = { }
+
     if showFrame then
         frame:Show()
     else
@@ -169,6 +170,49 @@ function addonTable.MainFrame.CreateIcon(parent, itemId, quality)
     return button
 end
 
+local function GetSortedProfessions()
+    -- Get player's learned professions
+    local prof1, prof2, _, fishing = GetProfessions()
+    local learnedProfessions = {}
+    if prof1 then
+        local name = GetProfessionInfo(prof1)
+        learnedProfessions[name] = true
+    end
+    if prof2 then
+        local name = GetProfessionInfo(prof2)
+        learnedProfessions[name] = true
+    end
+    if fishing then
+        local name = GetProfessionInfo(fishing)
+        learnedProfessions[name] = true
+    end
+
+    local professionSeting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
+        
+    -- Collect enabled and learned categories
+    local enabledCategories = {}
+    for category, _ in pairs(addonTable.MainFrame.Counts) do
+        local professionTranslation = addonTable.ProfessionTranslate[category]
+        local display = false
+        for _, prof in pairs(professionSeting) do
+            if professionTranslation == prof.name then
+                display = prof.enabled
+                break
+            end
+        end
+        if display and learnedProfessions[professionTranslation] then
+            table.insert(enabledCategories, category)
+        end
+    end
+    
+    -- Sort enabled categories: prioritize Mining, Herbalism, Skinning, then Fishing
+    table.sort(enabledCategories, function(a, b)
+        local order = {MINING = 1, HERBALISM = 2, SKINNING = 3, FISHING = 4}
+        return order[a] < order[b]
+    end)
+    return enabledCategories
+end
+
 function addonTable.MainFrame.UpdateUI()
     if not addonTable.MainFrame.frame then
         addonTable.MainFrame.Initialize()
@@ -183,62 +227,66 @@ function addonTable.MainFrame.UpdateUI()
         addonTable.MainFrame.frame:Hide()
         return
     end
-
     
-    local currentY = -10
-
-    local professionSeting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
-    for category, itemData in pairs(addonTable.MainFrame.Counts) do
-        local professionTranslation = addonTable.ProfessionTranslate[category]
-        local display = false
-        -- Check if the category (i.E the profession) is enabled in the curent profile
-        for _, prof in pairs(professionSeting) do
-            if professionTranslation == prof.name then
-                display = prof.enabled
-                break
-            end
+    local enabledCategories = GetSortedProfessions()
+    
+    -- Assign positions: first two in row 0 (col 0 and 1), Fishing in row 1 col 0
+    local positions = {}
+    local topRow = {}
+    for _, category in ipairs(enabledCategories) do
+        if category == "FISHING" then
+            positions[category] = {col = 0, row = 1}
+        elseif #topRow < 2 then
+            table.insert(topRow, category)
         end
-        if display then
-             -- Create header if not exists
+    end
+    -- Assign top row positions
+    for i, category in ipairs(topRow) do
+        positions[category] = {col = i-1, row = 0}
+    end
+    
+    -- Now position the categories
+    local rowIconY = 0
+    for category, items in pairs(addonTable.MainFrame.Counts) do
+        local professionTranslation = addonTable.ProfessionTranslate[category]
+        local pos = positions[category]
+        if pos then
+            local colIcon = 0
+
+            local x = 10 + pos.col * (sectionWidth + sectionXSpacing)
+            local y = -35 - pos.row * (headerHeight - rowIconY)
+            local iconY = y - headerHeight
+            rowIconY = iconY
+            -- Create or reposition header
             if not addonTable.MainFrame.headers[category] then
                 local header = addonTable.MainFrame.frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                header:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", 10, currentY)
+                header:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", x, y)
                 header:SetText(professionTranslation)
                 addonTable.MainFrame.headers[category] = header
             else
-                addonTable.MainFrame.headers[category]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", 10, currentY)
+                addonTable.MainFrame.headers[category]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", x, y)
                 addonTable.MainFrame.headers[category]:Show()
             end
-            currentY = currentY - headerHeight
-            local rowY = currentY
-            local col = 0
-
-            for _, info in ipairs(itemData) do
-                -- info[1] => item id
-                -- info[2] => cont in bags
-                -- info[3] => item contains quality and extension
-                if C_Item.GetItemInfo(info[1]) then
-                    if not addonTable.MainFrame.icons[info[1]] then
-                        addonTable.MainFrame.icons[info[1]] = addonTable.MainFrame.CreateIcon(addonTable.MainFrame.frame, info[1], info[3].quality)
+            for _, info in ipairs(items) do
+                local itemID = info[1]
+                local count = info[2]
+                local item = info[3]
+                if C_Item.GetItemInfo(itemID) then
+                    if not addonTable.MainFrame.icons[itemID] then
+                        addonTable.MainFrame.icons[itemID] = addonTable.MainFrame.CreateIcon(addonTable.MainFrame.frame, itemID, item.quality)
                     end
-                    local x = 10 + col * (iconSize + iconSpacingX)
-                    addonTable.MainFrame.icons[info[1]]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", x, rowY)
-                    addonTable.MainFrame.icons[info[1]]:Show()
-                    addonTable.MainFrame.icons[info[1]].text:SetText(info[2])
-                    local colorForProfession = addonTable.Colors.GetColorForValue(professionTranslation, info[2])
-                    addonTable.MainFrame.icons[info[1]].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
-                    col = col + 1
-                    if col >= itemsPerRow then
-                        col = 0
-                        rowY = rowY - (iconSize + 20)  -- Approximate height for icon + text
+                    local iconX = x + colIcon * (iconSize + iconSpacingX)
+                    addonTable.MainFrame.icons[itemID]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", iconX, rowIconY)
+                    addonTable.MainFrame.icons[itemID]:Show()
+                    addonTable.MainFrame.icons[itemID].text:SetText(tostring(count))
+                    local colorForProfession = addonTable.Colors.GetColorForValue(professionTranslation, count)
+                    addonTable.MainFrame.icons[itemID].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
+                    colIcon = colIcon + 1
+                    if colIcon >= itemsPerRow then
+                        colIcon = 0
+                        rowIconY = rowIconY - (iconSize + 20)
                     end
                 end
-            end
-            -- Update currentY for next category
-            if col > 0 then
-                currentY = rowY - (iconSize + 20)
-            else
-                currentY = rowY
             end
         else
             -- Hide header if exists
@@ -246,9 +294,10 @@ function addonTable.MainFrame.UpdateUI()
                 addonTable.MainFrame.headers[category]:Hide()
             end
             -- Hide icons for this category
-            for _, info in pairs(itemData) do
-                if addonTable.MainFrame.icons[info[1]] then
-                    addonTable.MainFrame.icons[info[1]]:Hide()
+            for _, info in ipairs(items) do
+                local itemID = info[1]
+                if addonTable.MainFrame.icons[itemID] then
+                    addonTable.MainFrame.icons[itemID]:Hide()
                 end
             end
         end
