@@ -123,6 +123,7 @@ function addonTable.MainFrame.Initialize()
     local showFrame = professionsConfig.MINING.enabled or professionsConfig.HERBALISM.enabled or professionsConfig.SKINNING.enabled or professionsConfig.FISHING.enabled
 
     frame:RegisterForDrag("LeftButton")
+    frame:SetPassThroughButtons("RightButton", "MiddleButton", "Button4", "Button5")
     frame:SetScript("OnDragStart", frame.StartMoving)
     frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
     

@@ -51,7 +51,6 @@ optionsFrame:Hide()
 
 -- Register the options panel as a Category in the Addon panel
 local category, layout = Settings.RegisterCanvasLayoutCategory(optionsFrame, addonTable.Locales.GATHER_OVERVIEW)
-category.ID = addonTable.Locales.GATHER_OVERVIEW
 Settings.RegisterAddOnCategory(category)
 addonTable.OptionDialog.ABOUT.category = category
 addonTable.OptionDialog.ABOUT.layout = layout

@@ -20,6 +20,8 @@ local settings = {
             medium_color = addonTable.Colors.orange,
             high = 100,
             high_color = addonTable.Colors.green,
+            icon_width = 32,
+            icon_height = 32
         },
         HERBALISM = {
             name = addonTable.Locales.HERBALISM,
@@ -29,6 +31,8 @@ local settings = {
             medium_color = addonTable.Colors.orange,
             high = 100,
             high_color = addonTable.Colors.green,
+            icon_width = 32,
+            icon_height = 32
         },
         SKINNING = {
             name = addonTable.Locales.SKINNING,
@@ -38,6 +42,8 @@ local settings = {
             medium_color = addonTable.Colors.orange,
             high = 100,
             high_color = addonTable.Colors.green,
+            icon_width = 32,
+            icon_height = 32
         },
         FISHING = {
             name = addonTable.Locales.FISHING,
@@ -47,6 +53,8 @@ local settings = {
             medium_color = addonTable.Colors.orange,
             high = 100,
             high_color = addonTable.Colors.green,
+            icon_width = 32,
+            icon_height = 32
         },
      }},
     LOW_THRESHOLD = { key="LowThreshold", default = 50 },
@@ -54,6 +62,8 @@ local settings = {
     MEDIUM_THRESHOLD_COLOR = { key="MediumThresholdColor", default = addonTable.Colors.orange },
     HIGH_THRESHOLD = { key="HighThreshold", default = 100 },
     HIGH_THRESHOLD_COLOR = { key="HighThresholdColor", default = addonTable.Colors.green },
+    ICON_WITDH = {key="IconWidth", default = 32},
+    ICON_HEIGHT = {key="IconHeight", default = 32}
 }
 -- Print contents of `tbl`, with indentation.
 -- `indent` sets the initial level of indentation.

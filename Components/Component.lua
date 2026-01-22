@@ -94,6 +94,7 @@ function addonTable.Components.GetHighThresholdAndColorPickerGroup(parent, prof)
 			if not prof then prof = {} end
 			prof.high = value
 			addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+			addonTable.MainFrame.UpdateUI()
 		end
 	end)
 	profHighContainer:AddChild(parent.prof.highThresholdInput)
@@ -107,6 +108,7 @@ function addonTable.Components.GetHighThresholdAndColorPickerGroup(parent, prof)
 		if not prof then prof = {} end
 		prof.high_color = {r = newr, g = newg, b = newb, a = newa}
 		addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+		addonTable.MainFrame.UpdateUI()
 	end)
 	profHighContainer:AddChild(highColorFrame)
 	return profHighContainer
@@ -137,6 +139,7 @@ function addonTable.Components.GetLowThresholdAndColorPickerGroup(parent, prof)
 			if not prof then prof = {} end
 			prof.low = value
 			addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+			addonTable.MainFrame.UpdateUI()
 		end
 	end)
 	profLowContainer:AddChild(parent.prof.lowThresholdInput)
@@ -150,6 +153,7 @@ function addonTable.Components.GetLowThresholdAndColorPickerGroup(parent, prof)
 		if not prof then prof = {} end
 		prof.low_color = {r = newr, g = newg, b = newb, a = newa}
 		addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+		addonTable.MainFrame.UpdateUI()
 	end)
 	
 	profLowContainer:AddChild(lowColorFrame)

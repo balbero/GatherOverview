@@ -13,6 +13,18 @@ function addonTable.SlashCmd.Reset()
   ReloadUI()
 end
 
+function addonTable.SlashCmd.CustomiseUI()
+
+  if addonTable.OptionDialog.ABOUT then
+    if Settings then
+      local id = addonTable.OptionDialog.ABOUT.category:GetID()
+      Settings.OpenToCategory(id)
+    else
+        InterfaceOptionsFrame_OpenToCategory(addonTable.Locales.GATHER_OVERVIEW)
+    end
+  end
+end
+
 local COMMANDS = {
   [""] = addonTable.SlashCmd.CustomiseUI,
   ["reset"] = addonTable.SlashCmd.Reset,
@@ -23,15 +35,9 @@ local HELP = {
   {addonTable.Locales.SLASH_RESET, addonTable.Locales.SLASH_RESET_HELP},
 }
 
-function addonTable.SlashCmd.CustomiseUI()
-  if addonTable.OptionDialog.ABOUT and addonTable.OptionDialog.ABOUT:IsShown() == false then
-    addonTable.OptionDialog.ABOUT:Show()
-  end
-end
-
 function addonTable.SlashCmd.Handler(input)
   local split = {strsplit("\a", (input:gsub("%s+","\a")))}
-
+  
   local root = split[1]
   if COMMANDS[root] ~= nil then
     table.remove(split, 1)

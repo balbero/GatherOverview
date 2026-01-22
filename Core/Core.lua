@@ -7,6 +7,10 @@ function addonTable.Core.MigrateSettings()
 end
 
 function addonTable.Core.Initialize()
+  addonTable.Utilities.Message(addonTable.Locales.WELCOME_MSG)
+  local version = C_AddOns.GetAddOnMetadata("GatherOverview", "Version")
+  addonTable.Utilities.Message(addonTable.Locales.VERSION .. ":".. version)
+  addonTable.Utilities.Message(addonTable.Locales.TO_OPEN_OPTIONS_X)
     -- Initialization code goes here
     addonTable.Config.InitializeData()
     addonTable.Core.UpdateProfessionEnabled()  -- Update Enabled Professions on start
