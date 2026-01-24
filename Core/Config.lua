@@ -6,11 +6,11 @@ addonTable.Config.Options = {}
 addonTable.Config.Defaults = {}
 
 local settings = {
-    SHOW_BUTTON = { key="ShowMapButton", default = true },
     FONT = { key="Font", default = "Friz Quadrata TT" },
     BG_COLOR = { key="BackgroundColor", default = {r = .2, b = .2, g = .2, a = 0.2} },
     BORDER = { key="BorderColor", default = addonTable.Colors.black },
     SHOW_IN_INSTANCES = { key="ShowInInstances", default = false },
+    SHOW_TOTAL = { key="ShowTotal", default = true },
     PROFESSIONS = { key="Professions", default = {
         MINING = {
             name = addonTable.Locales.MINING,
@@ -63,24 +63,9 @@ local settings = {
     HIGH_THRESHOLD = { key="HighThreshold", default = 100 },
     HIGH_THRESHOLD_COLOR = { key="HighThresholdColor", default = addonTable.Colors.green },
     ICON_WITDH = {key="IconWidth", default = 32},
-    ICON_HEIGHT = {key="IconHeight", default = 32}
+    ICON_HEIGHT = {key="IconHeight", default = 32},
+    ROW_AMOUNT = {key="RowAmount", default = 3},
 }
--- Print contents of `tbl`, with indentation.
--- `indent` sets the initial level of indentation.
-function tprint (tbl, indent)
-  if not indent then indent = 0 end
-  for k, v in pairs(tbl) do
-    local formatting = string.rep("  ", indent) .. k .. ": "
-    if type(v) == "table" then
-      print(formatting)
-      tprint(v, indent+1)
-    elseif type(v) == 'boolean' then
-      print(formatting .. tostring(v))      
-    else
-      print(formatting .. v)
-    end
-  end
-end
 
 for key, details in pairs(settings) do
     addonTable.Config.Options[key] = details.key
@@ -89,6 +74,35 @@ for key, details in pairs(settings) do
     else
       addonTable.Config.Defaults[details.key] = details.default
     end
+end
+
+local addedInstalledNestedToList = {}
+local installedNested = {}
+
+function addonTable.Config.Install(name, defaultValue)
+  if GATHEROVERVIEW_CONFIG == nil then
+    error("GATHEROVERVIEW_CONFIG not initialized")
+  elseif name:find("%.") == nil then
+    if addonTable.Config.CurrentProfile[name] == nil then
+      addonTable.Config.CurrentProfile[name] = defaultValue
+    end
+  else
+    if not addedInstalledNestedToList[name] then
+      addedInstalledNestedToList[name] = true
+      table.insert(installedNested, name)
+    end
+    local tree = {strsplit(".", name)}
+    local root = addonTable.Config.CurrentProfile
+    for i = 1, #tree - 1 do
+      if not root[tree[i]] then
+        root[tree[i]] = {}
+      end
+      root = root[tree[i]]
+    end
+    if root[tree[#tree]] == nil then
+      root[tree[#tree]] = defaultValue
+    end
+  end
 end
 
 function addonTable.Config.IsValidOption(name)
@@ -194,9 +208,8 @@ function addonTable.Config.GetProfileNames(exceptCurrent)
   if exceptCurrent then
     local currentProfileName = GATHEROVERVIEW_CURRENT_PROFILE
     for i = #tbl, 1, -1 do
-      if tbl[i] == currentProfileName then
+      if tbl[i] == currentProfileName or tbl[i] == "DEFAULT" then
         table.remove(tbl, i)
-        break
       end
     end
   end
@@ -208,7 +221,7 @@ function addonTable.Config.ChangeProfile(newProfileName, comparisonData)
 
   local changedOptions = {}
   local newProfile = GATHEROVERVIEW_CONFIG.Profiles[newProfileName]
-  oldProfile = comparisonData or addonTable.Config.CurrentProfile
+  local oldProfile = comparisonData or addonTable.Config.CurrentProfile
 
   for name, value in pairs(oldProfile) do
     if value ~= newProfile[name] then
@@ -222,13 +235,6 @@ function addonTable.Config.ChangeProfile(newProfileName, comparisonData)
   GATHEROVERVIEW_CURRENT_PROFILE = newProfileName
 
   ImportDefaultsToProfile()
-
-  addonTable.Core.MigrateSettings()
-
-  for _, name in ipairs(changedOptions) do
-    addonTable.CallbackRegistry:TriggerEvent("SettingChanged", name)
-  end
-  
 end
 
 function addonTable.Config.MakeProfile(newProfileName, clone)

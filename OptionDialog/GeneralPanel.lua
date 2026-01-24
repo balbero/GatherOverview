@@ -27,23 +27,35 @@ function panel:GetOptionInsetPanel()
     optionsInset:SetTitle(addonTable.Locales.OPTION_DISPLAY)
     optionsInset:SetFullWidth(true)
     do
-        self.showMinimapButton = AceGUI:Create("CheckBox")
-        self.showMinimapButton:SetFullWidth(true)
-        self.showMinimapButton:SetLabel(addonTable.Locales.SHOW_MAP_BUTTON)
-        self.showMinimapButton:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_BUTTON))
-        self.showMinimapButton:SetCallback("OnValueChanged", function(_, _, value)
-            addonTable.Config.Set(addonTable.Config.Options.SHOW_BUTTON, value)
-        end)
-        optionsInset:AddChild(self.showMinimapButton)
-
         self.showInInstance = AceGUI:Create("CheckBox")
+        self.showInInstance.message = {
+            name = addonTable.Locales.SHOW_IN_INSTANCES,
+            description = addonTable.Locales.SHOW_IN_INSTANCES_SUB
+        }
         self.showInInstance:SetFullWidth(true)
         self.showInInstance:SetLabel(addonTable.Locales.SHOW_IN_INSTANCES)
         self.showInInstance:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES))
         self.showInInstance:SetCallback("OnValueChanged", function(_, _, value)
             addonTable.Config.Set(addonTable.Config.Options.SHOW_IN_INSTANCES, value)
         end)
+        self.showInInstance:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.showInInstance:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
         optionsInset:AddChild(self.showInInstance)
+
+        self.showTotal = AceGUI:Create("CheckBox")
+        self.showTotal.message = {
+            name = addonTable.Locales.SHOW_TOTAL,
+            description = addonTable.Locales.SHOW_TOTAL_SUB
+        }
+        self.showTotal:SetFullWidth(true)
+        self.showTotal:SetLabel(addonTable.Locales.SHOW_TOTAL)
+        self.showTotal:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_TOTAL))
+        self.showTotal:SetCallback("OnValueChanged", function(_, _, value)
+            addonTable.Config.Set(addonTable.Config.Options.SHOW_TOTAL, value)
+        end)
+        self.showTotal:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.showTotal:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+        optionsInset:AddChild(self.showTotal)
     end
 
     return optionsInset
@@ -69,6 +81,32 @@ function panel:SetupGeneral()
     local professionsInset = AceGUI:Create("InlineGroup")
     professionsInset:SetTitle(addonTable.Locales.PROFESSIONS)
     professionsInset:SetFullWidth(true)
+
+    local iconPerRowGroup = AceGUI:Create("SimpleGroup")
+    iconPerRowGroup:SetFullWidth(true)
+    iconPerRowGroup:SetLayout("Flow")
+    self.iconPerRowSlider = AceGUI:Create("Slider")
+    self.iconPerRowSlider:SetWidth(150)
+    self.iconPerRowSlider:SetSliderValues(2, 12, 1)
+    self.iconPerRowSlider:SetLabel(addonTable.Locales.ROW_AMOUNT)
+    self.iconPerRowSlider:SetValue(addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT))
+    self.iconPerRowSlider:SetCallback("OnMouseUp", function(_,_, value)
+        addonTable.Config.Set(addonTable.Config.Options.ROW_AMOUNT, value)
+        addonTable.MainFrame.UpdateUI()
+    end)
+    iconPerRowGroup:AddChild(self.iconPerRowSlider)
+    professionsInset:AddChild(iconPerRowGroup)
+    
+    professionsInset:AddChild(addonTable.Components.GetVSpace(5))
+
+    local separator = AceGUI:Create("Heading")
+    separator:SetText("")
+    separator:SetFullWidth(true)
+    separator:SetHeight(2)
+    professionsInset:AddChild(separator)
+    
+    professionsInset:AddChild(addonTable.Components.GetVSpace(5))
+
     for _, prof in pairs(professionsConfig) do
 	    self.prof = {}
         local profContainer = AceGUI:Create("SimpleGroup")
@@ -87,30 +125,30 @@ function panel:SetupGeneral()
         local iconSizeLabel = AceGUI:Create("Label")
         iconSizeLabel:SetText(addonTable.Locales.ICON_SIZE)
         iconSizeGroup:AddChild(iconSizeLabel)
-        local iconWidthSlider = AceGUI:Create("Slider")
-        iconWidthSlider:SetWidth(100)
-        iconWidthSlider:SetSliderValues(16, 64, 1)
-        iconWidthSlider:SetLabel(addonTable.Locales.WIDTH)
-        iconWidthSlider:SetValue(prof.icon_width or addonTable.Config.Get(addonTable.Config.Options.ICON_WIDTH))
-        iconWidthSlider:SetCallback("OnMouseUp", function(_,_, value)
+        self.prof.iconWidthSlider = AceGUI:Create("Slider")
+        self.prof.iconWidthSlider:SetWidth(150)
+        self.prof.iconWidthSlider:SetSliderValues(16, 64, 1)
+        self.prof.iconWidthSlider:SetLabel(addonTable.Locales.WIDTH)
+        self.prof.iconWidthSlider:SetValue(prof.icon_width or addonTable.Config.Get(addonTable.Config.Options.ICON_WIDTH))
+        self.prof.iconWidthSlider:SetCallback("OnMouseUp", function(_,_, value)
             if not prof then prof = {} end
-            prof.icon_width = value 
+            prof.icon_width = value
             addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
             addonTable.MainFrame.UpdateUI()
         end)
-        iconSizeGroup:AddChild(iconWidthSlider)
-        local iconHeightSlider = AceGUI:Create("Slider")
-        iconHeightSlider:SetWidth(100)
-        iconHeightSlider:SetSliderValues(16, 64, 1)
-        iconHeightSlider:SetLabel(addonTable.Locales.HEIGHT)
-        iconHeightSlider:SetValue(prof.icon_height or addonTable.Config.Get(addonTable.Config.Options.ICON_HEIGHT))
-        iconWidthSlider:SetCallback("OnMouseUp", function(_,_, value)
+        iconSizeGroup:AddChild(self.prof.iconWidthSlider)
+        self.prof.iconHeightSlider = AceGUI:Create("Slider")
+        self.prof.iconHeightSlider:SetWidth(150)
+        self.prof.iconHeightSlider:SetSliderValues(16, 64, 1)
+        self.prof.iconHeightSlider:SetLabel(addonTable.Locales.HEIGHT)
+        self.prof.iconHeightSlider:SetValue(prof.icon_height or addonTable.Config.Get(addonTable.Config.Options.ICON_HEIGHT))
+        self.prof.iconHeightSlider:SetCallback("OnMouseUp", function(_,_, value)
             if not prof then prof = {} end
-            prof.icon_height = value 
+            prof.icon_height = value
             addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
             addonTable.MainFrame.UpdateUI()
         end)
-        iconSizeGroup:AddChild(iconHeightSlider)
+        iconSizeGroup:AddChild(self.prof.iconHeightSlider)
         profContainer:AddChild(iconSizeGroup)
         
         -- Low Threshold input for this profession
@@ -124,18 +162,18 @@ function panel:SetupGeneral()
 
         profMedContainer:AddChild(addonTable.Components.GetHSpace(177)) -- space before threshold label + threshold label width + edit box width + space after editbox
         
-        local medColorFrame = AceGUI:Create("ColorPicker")
+        self.prof.medColorFrame = AceGUI:Create("ColorPicker")
         local med_color = prof.medium_color or addonTable.Config.Get(addonTable.Config.Options.MEDIUM_THRESHOLD_COLOR)
-        medColorFrame:SetLabel(addonTable.Locales.MEDIUM_COLOR)
-        medColorFrame:SetColor(med_color.r, med_color.g, med_color.b, med_color.a)
-        medColorFrame:SetCallback("OnValueChanged",  function(_, _, newr, newg, newb, newa)
+        self.prof.medColorFrame:SetLabel(addonTable.Locales.MEDIUM_COLOR)
+        self.prof.medColorFrame:SetColor(med_color.r, med_color.g, med_color.b, med_color.a)
+        self.prof.medColorFrame:SetCallback("OnValueChanged",  function(_, _, newr, newg, newb, newa)
             if not prof then prof = {} end
             if prof.medium_color ~= nil and prof.medium_color == {r = newr, g = newg, b = newb, a = newa} then return end
             prof.medium_color = {r = newr, g = newg, b = newb, a = newa}
             addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
             addonTable.MainFrame.UpdateUI()
         end)
-        profMedContainer:AddChild(medColorFrame)
+        profMedContainer:AddChild(self.prof.medColorFrame)
         profContainer:AddChild(profMedContainer)
 
         -- High Threshold input for this profession
@@ -164,28 +202,42 @@ function panel.refresh()
         end
 
         local professionsConfig = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
-        panel.showMinimapButton:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_BUTTON))
         panel.showInInstance:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES))
+        panel.showTotal:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_TOTAL))
+        panel.iconPerRowSlider:SetValue(addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT))
         for _, prof in ipairs(professionsConfig) do
+            if panel.prof.iconWidthSlider then
+                panel.prof.iconWidthSlider:SetValue(prof.icon_width or addonTable.Config.Get(addonTable.Config.Options.ICON_WIDTH))
+            end
+            if panel.prof.iconHeightSlider then
+                panel.prof.iconHeightSlider:SetValue(prof.icon_height or addonTable.Config.Get(addonTable.Config.Options.ICON_HEIGHT))
+            end
             if panel.prof.lowThresholdInput then
                 panel.prof.lowThresholdInput:SetText(tostring(prof and prof.low or 50))
             end
             if panel.prof.highThresholdInput then
                 panel.prof.highThresholdInput:SetText(tostring(prof and prof.high or 100))
             end
-            if panel.prof.lowColorButton then
+            if panel.prof.lowColorFrame then
                 local lowColor = addonTable.Config.Get(addonTable.Config.Options.LOW_THRESHOLD_COLOR)
                 if prof then
                     lowColor = prof.low_color or lowColor
                 end
-                panel.prof.lowColorButton.Texture:SetVertexColor(lowColor.r, lowColor.g, lowColor.b, lowColor.a)
+                panel.prof.lowColorFrame:SetColor(lowColor.r, lowColor.g, lowColor.b, lowColor.a)
             end
-            if panel.prof.highColorButton then
+            if panel.prof.medColorFrame then
+                local med_color = addonTable.Config.Get(addonTable.Config.Options.MEDIUM_THRESHOLD_COLOR)
+                if prof then
+                    med_color = prof.medium_color or med_color
+                end
+                panel.prof.medColorFrame:SetColor(med_color.r, med_color.g, med_color.b, med_color.a)
+            end
+            if panel.prof.highColorFrame then
                 local high_color = addonTable.Config.Get(addonTable.Config.Options.HIGH_THRESHOLD_COLOR)
                 if prof then
                     high_color = prof.high_color or high_color
                 end
-                panel.prof.highColorButton.Texture:SetVertexColor(high_color.r, high_color.g, high_color.b, high_color.a)
+                panel.prof.highColorFrame:SetColor(high_color.r, high_color.g, high_color.b, high_color.a)
             end
         end
     end, geterrorhandler())

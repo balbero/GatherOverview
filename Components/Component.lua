@@ -1,7 +1,41 @@
 ---@class addonTablePlatynator
 local addonTable = select(2, ...)
+local InCombatLockdown = InCombatLockdown
 
 addonTable.Components = {}
+
+
+local tooltip = tooltip or CreateFrame("GameTooltip", "GatherOverviewTooltip", UIParent, "GameTooltipTemplate")
+
+
+--- Create a tooltip for the widget
+---@param widget AceGUI-3.0 widget concerned by the tooltip
+---@param event string event to be catched
+function addonTable.Components.OptionOnMouseOver(widget, event)
+	--show a tooltip/set the status bar to the desc text
+	local user = widget.message
+	local name = user.name
+	local desc = user.description
+	local usage = user.usage
+
+	tprint(widget.message)
+
+	tooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+	tooltip:AddLine(name, 1, .82, 0, true)
+
+	if type(desc) == "string" then
+		tooltip:AddLine(desc, 1, 1, 1, true)
+	end
+	if type(usage) == "string" then
+		tooltip:AddLine("Usage: "..usage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true)
+	end
+
+	tooltip:Show()
+end
+
+function addonTable.Components.OptionOnMouseLeave(widget, event)
+	tooltip:Hide()
+end
 
 function addonTable.Components.GetHSpace(width)
 	local AceGUI = LibStub("AceGUI-3.0")
@@ -20,52 +54,101 @@ function addonTable.Components.GetVSpace(height)
 	return space
 end
 
-function addonTable.Components.CreateConfirmationPopup(title, text, onOk, onCancel)
-	local AceGUI = LibStub("AceGUI-3.0")
+local function createPopup()
+	local frame = addonTable.Components.popupFrame
+	if not frame then
+		frame = CreateFrame("Frame", nil, UIParent)
+		frame:Hide()
+		addonTable.Components.popupFrame = frame
+		frame:SetPoint("CENTER", UIParent, "CENTER")
+		frame:SetSize(320, 72)
+		frame:EnableMouse(true) -- Do not allow click-through on the frame
+		frame:SetFrameStrata("TOOLTIP")
+		frame:SetFrameLevel(100) -- Lots of room to draw under it
+		frame:SetScript("OnKeyDown", function(self, key)
+			if key == "ESCAPE" then
+				if not InCombatLockdown() then
+					self:SetPropagateKeyboardInput(false)
+				end
+				if self.cancel:IsShown() then
+					self.cancel:Click()
+				else -- Showing a validation error
+					self:Hide()
+				end
+			elseif not InCombatLockdown() then
+				self:SetPropagateKeyboardInput(true)
+			end
+		end)
+
+		local border = CreateFrame("Frame", nil, frame, "DialogBorderOpaqueTemplate")
+		border:SetAllPoints(frame)
+		frame:SetFixedFrameStrata(true)
+		frame:SetFixedFrameLevel(true)
+
+		local text = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+		text:SetSize(290, 0)
+		text:SetPoint("TOP", 0, -16)
+		frame.text = text
+
+		local function newButton(newText)
+			local button = CreateFrame("Button", nil, frame)
+			button:SetSize(128, 21)
+			button:SetNormalFontObject(GameFontNormal)
+			button:SetHighlightFontObject(GameFontHighlight)
+			button:SetNormalTexture(130763) -- "Interface\\Buttons\\UI-DialogBox-Button-Up"
+			button:GetNormalTexture():SetTexCoord(0.0, 1.0, 0.0, 0.71875)
+			button:SetPushedTexture(130761) -- "Interface\\Buttons\\UI-DialogBox-Button-Down"
+			button:GetPushedTexture():SetTexCoord(0.0, 1.0, 0.0, 0.71875)
+			button:SetHighlightTexture(130762) -- "Interface\\Buttons\\UI-DialogBox-Button-Highlight"
+			button:GetHighlightTexture():SetTexCoord(0.0, 1.0, 0.0, 0.71875)
+			button:SetText(newText)
+			return button
+		end
+
+		local accept = newButton(ACCEPT)
+		accept:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", -6, 16)
+		frame.accept = accept
+
+		local cancel = newButton(CANCEL)
+		cancel:SetPoint("LEFT", accept, "RIGHT", 13, 0)
+		frame.cancel = cancel
+	end
+	return frame
+end
+
+--- Show a confirmation popup
+---@param text string the message display in the popup
+---@param onOk function A function to be executed when user accept
+---@param onCancel function A function to be executed when user cancel
+function addonTable.Components.ShowConfirmationDialog(text, onOk, onCancel)
     -- Créer le frame principal (popup)
-    local frame = AceGUI:Create("Frame")
-    frame:SetTitle(title)
-    frame:SetWidth(300)
-    frame:SetHeight(150)
-    frame:SetLayout("Flow")  -- Layout vertical pour empiler les éléments
-
-    -- Ajouter le label avec le texte personnalisé
-    local label = AceGUI:Create("Label")
-    label:SetText(text)
-    label:SetFullWidth(true)
-    frame:AddChild(label)
-
-    -- Créer un conteneur pour les boutons (pour les aligner horizontalement)
-    local buttonGroup = AceGUI:Create("SimpleGroup")
-    buttonGroup:SetLayout("Flow")
-    buttonGroup:SetFullWidth(true)
-
-    -- Bouton "Cancel"
-    local cancelButton = AceGUI:Create("Button")
-    cancelButton:SetText("Cancel")
-    cancelButton:SetWidth(100)
-    cancelButton:SetCallback("OnClick", function()
+    local frame = addonTable.Components.popupFrame
+	if not frame then
+		frame = createPopup()
+	end
+	frame:Show()
+	frame.text:SetText(text)
+	local height = 61 + frame.text:GetHeight()
+	frame:SetHeight(height)
+	
+    frame.cancel:SetScript("OnClick", function(self)
         if onCancel then
             onCancel()
         end
         frame:Hide()  -- Fermer la popup
+		self:SetScript("OnClick", nil)
+		frame.cancel:SetScript("OnClick", nil)
     end)
-    buttonGroup:AddChild(cancelButton)
 
     -- Bouton "Ok"
-    local okButton = AceGUI:Create("Button")
-    okButton:SetText("Ok")
-    okButton:SetWidth(100)
-    okButton:SetCallback("OnClick", function()
+    frame.accept:SetScript("OnClick", function(self)
         if onOk then
             onOk()
         end
         frame:Hide()  -- Fermer la popup après action
+		self:SetScript("OnClick", nil)
+		frame.cancel:SetScript("OnClick", nil)
     end)
-    buttonGroup:AddChild(okButton)
-
-    -- Ajouter le groupe de boutons au frame
-    frame:AddChild(buttonGroup)
 
     -- Afficher la popup
     frame:Show()
@@ -101,16 +184,16 @@ function addonTable.Components.GetHighThresholdAndColorPickerGroup(parent, prof)
 
 	profHighContainer:AddChild(addonTable.Components.GetHSpace(10))
 
-	local highColorFrame = AceGUI:Create("ColorPicker")
+	parent.prof.highColorFrame = AceGUI:Create("ColorPicker")
 	local high_color = prof.high_color or addonTable.Config.Get(addonTable.Config.Options.HIGH_THRESHOLD_COLOR)
-	highColorFrame:SetColor(high_color.r, high_color.g, high_color.b, high_color.a)
-	highColorFrame:SetCallback("OnValueChanged", function(_, _, newr, newg, newb, newa)
+	parent.prof.highColorFrame:SetColor(high_color.r, high_color.g, high_color.b, high_color.a)
+	parent.prof.highColorFrame:SetCallback("OnValueChanged", function(_, _, newr, newg, newb, newa)
 		if not prof then prof = {} end
 		prof.high_color = {r = newr, g = newg, b = newb, a = newa}
 		addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
 		addonTable.MainFrame.UpdateUI()
 	end)
-	profHighContainer:AddChild(highColorFrame)
+	profHighContainer:AddChild(parent.prof.highColorFrame)
 	return profHighContainer
 end
 
@@ -146,16 +229,16 @@ function addonTable.Components.GetLowThresholdAndColorPickerGroup(parent, prof)
 
 	profLowContainer:AddChild(addonTable.Components.GetHSpace(10))
 
-	local lowColorFrame = AceGUI:Create("ColorPicker")
+	parent.prof.lowColorFrame = AceGUI:Create("ColorPicker")
 	local low_color = prof.low_color or addonTable.Config.Get(addonTable.Config.Options.LOW_THRESHOLD_COLOR)
-	lowColorFrame:SetColor(low_color.r, low_color.g, low_color.b, low_color.a)
-	lowColorFrame:SetCallback("OnValueChanged", function(_, _, newr, newg, newb, newa)
+	parent.prof.lowColorFrame:SetColor(low_color.r, low_color.g, low_color.b, low_color.a)
+	parent.prof.lowColorFrame:SetCallback("OnValueChanged", function(_, _, newr, newg, newb, newa)
 		if not prof then prof = {} end
 		prof.low_color = {r = newr, g = newg, b = newb, a = newa}
 		addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
 		addonTable.MainFrame.UpdateUI()
 	end)
 	
-	profLowContainer:AddChild(lowColorFrame)
+	profLowContainer:AddChild(parent.prof.lowColorFrame)
 	return profLowContainer
 end
