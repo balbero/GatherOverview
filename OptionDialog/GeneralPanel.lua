@@ -119,6 +119,25 @@ function panel:SetupGeneral()
         profLabel:SetFullWidth(true)
         profContainer:AddChild(profLabel)
 
+        if prof.name == addonTable.Locales.FISHING then
+            self.displayFishing = AceGUI:Create("CheckBox")
+            self.displayFishing.message = {
+                name = addonTable.Locales.DISPLAY_FISHING,
+                description = addonTable.Locales.DISPLAY_FISHING_SUB
+            }
+            self.displayFishing:SetFullWidth(true)
+            self.displayFishing:SetLabel(addonTable.Locales.DISPLAY_FISHING)
+            self.displayFishing:SetValue(prof.display)
+            self.displayFishing:SetCallback("OnValueChanged", function(_, _, value)
+                if not prof then prof = {} end
+                prof.display = value
+                addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+                addonTable.MainFrame.UpdateUI()
+            end)
+            self.displayFishing:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+            self.displayFishing:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+            profContainer:AddChild(self.displayFishing)
+        end
         local iconSizeGroup = AceGUI:Create("SimpleGroup")
         iconSizeGroup:SetFullWidth(true)
         iconSizeGroup:SetLayout("Flow")
@@ -238,6 +257,9 @@ function panel.refresh()
                     high_color = prof.high_color or high_color
                 end
                 panel.prof.highColorFrame:SetColor(high_color.r, high_color.g, high_color.b, high_color.a)
+            end
+            if panel.prof.displayFishing and prof ~= nil and prof.name == addonTable.Locales.FISHING then
+                panel.prof.displayFishing:SetValue(prof.display or true)
             end
         end
     end, geterrorhandler())

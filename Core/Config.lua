@@ -48,6 +48,7 @@ local settings = {
         FISHING = {
             name = addonTable.Locales.FISHING,
             enabled = true,
+            display = true,
             low = 50,
             low_color = addonTable.Colors.red,
             medium_color = addonTable.Colors.orange,
@@ -76,34 +77,7 @@ for key, details in pairs(settings) do
     end
 end
 
-local addedInstalledNestedToList = {}
 local installedNested = {}
-
-function addonTable.Config.Install(name, defaultValue)
-  if GATHEROVERVIEW_CONFIG == nil then
-    error("GATHEROVERVIEW_CONFIG not initialized")
-  elseif name:find("%.") == nil then
-    if addonTable.Config.CurrentProfile[name] == nil then
-      addonTable.Config.CurrentProfile[name] = defaultValue
-    end
-  else
-    if not addedInstalledNestedToList[name] then
-      addedInstalledNestedToList[name] = true
-      table.insert(installedNested, name)
-    end
-    local tree = {strsplit(".", name)}
-    local root = addonTable.Config.CurrentProfile
-    for i = 1, #tree - 1 do
-      if not root[tree[i]] then
-        root[tree[i]] = {}
-      end
-      root = root[tree[i]]
-    end
-    if root[tree[#tree]] == nil then
-      root[tree[#tree]] = defaultValue
-    end
-  end
-end
 
 function addonTable.Config.IsValidOption(name)
     for _, option in pairs(addonTable.Config.Options) do

@@ -69,6 +69,8 @@ L["ICON_SIZE"] = "Icon size"
 L["SHOW_TOTAL"] = "Show total amount"
 L["SHOW_TOTAL_SUB"] = "Show total amount in bags and bank"
 L["ROW_AMOUNT"] = "Number of icon per row"
+L["DISPLAY_FISHING"] = "Display fishing resources"
+L["DISPLAY_FISHING_SUB"] = "Display fishing resources on main frame. Fishing resources are many and can increase fundamentally the frame size."
 
 local L = Locales.frFR
 -- French (FR) Translations
@@ -134,3 +136,5 @@ L["ICON_SIZE"] = "Taille des icônes"
 L["SHOW_TOTAL"] = "Afficher les quantités totales"
 L["SHOW_TOTAL_SUB"] = "Afficher les quantités totales dans les sacs ET dans la banque"
 L["ROW_AMOUNT"] = "Icône par ligne"
+L["DISPLAY_FISHING"] = "Afficher les ressources de pêche"
+L["DISPLAY_FISHING_SUB"] = "Affiche les ressources de pêche. Les ressources de pêche sont nombreuses et peuvent augmenter la taille de la fenêtre de manière importante."

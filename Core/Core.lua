@@ -1,23 +1,17 @@
 ---@class addonTableGatherOverview
 local addonTable = select(2, ...)
 
-function addonTable.Core.MigrateSettings()
-  -- Migrate old settings to new settings here
-  
-end
-
 function addonTable.Core.Initialize()
   addonTable.Utilities.Message(addonTable.Locales.WELCOME_MSG)
   local version = C_AddOns.GetAddOnMetadata("GatherOverview", "Version")
   addonTable.Utilities.Message(addonTable.Locales.VERSION .. ":".. version)
   addonTable.Utilities.Message(addonTable.Locales.TO_OPEN_OPTIONS_X)
-    -- Initialization code goes here
-    addonTable.Config.InitializeData()
-    addonTable.Core.UpdateProfessionEnabled()  -- Update Enabled Professions on start
-    addonTable.SlashCmd.Initialize()
-    
-    addonTable.OptionDialog.Initialize()
-    addonTable.MainFrame.Initialize()
+  -- Initialization code goes here
+  addonTable.Config.InitializeData()
+  addonTable.Core.UpdateProfessionEnabled()  -- Update Enabled Professions on start
+  addonTable.SlashCmd.Initialize()
+  addonTable.OptionDialog.Initialize()
+  addonTable.MainFrame.Initialize()
 end
 
 function addonTable.Core.UpdateProfessionEnabled()

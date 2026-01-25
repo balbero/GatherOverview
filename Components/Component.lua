@@ -18,8 +18,6 @@ function addonTable.Components.OptionOnMouseOver(widget, event)
 	local desc = user.description
 	local usage = user.usage
 
-	tprint(widget.message)
-
 	tooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
 	tooltip:AddLine(name, 1, .82, 0, true)
 

@@ -1,19 +1,14 @@
 ---@class addonTableGatherOverview
 local addonTable = select(2, ...)
-local AceGUI = LibStub("AceGUI-3.0")
-
 addonTable.MainFrame = {}
 addonTable.MainFrame.labels = {}
 addonTable.MainFrame.Counts = {}
 
 local headerHeight = 20
 local iconSpacingX = 10
-local sectionWidth = 180
+local frameWidth = 350
+local frameHeight = 800
 local sectionXSpacing = 10
-
-local function AdjustFrameSize()
-
-end
 
 function addonTable.MainFrame.RefreshLabels()
     for itemID, data in pairs(addonTable.MainFrame.labels) do
@@ -85,11 +80,11 @@ function addonTable.MainFrame.ScanBags()
 end
 
 function addonTable.MainFrame.Initialize()
-    local header_size = 12
+    local header_size = 20
     -- Create the Main panel
     local frame = CreateFrame("frame", "GatherOverview_MainFrame", UIParent, "BackdropTemplate")
     frame:SetPoint("TOP", UIParent, "TOP", 0, -110)
-	frame:SetSize(addonTable.Config.Get("width") or 350, addonTable.Config.Get("height") or 800)
+	frame:SetSize(frameWidth, frameHeight)
     frame:SetBackdrop(
     {
         bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
@@ -175,6 +170,7 @@ function addonTable.MainFrame.CreateIcon(parent, itemId, quality, iconW, iconH)
 end
 
 local function GetSortedProfessions()
+    local professionSetting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     -- Get player's learned professions
     local prof1, prof2, _, fishing = GetProfessions()
     local learnedProfessions = {}
@@ -191,13 +187,12 @@ local function GetSortedProfessions()
         learnedProfessions[name] = true
     end
         
-    local professionSeting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     -- Collect enabled and learned categories
     local enabledCategories = {}
     for category, _ in pairs(addonTable.MainFrame.Counts) do
         local professionTranslation = addonTable.ProfessionTranslate[category]
         local display = false
-        for _, prof in pairs(professionSeting) do
+        for _, prof in pairs(professionSetting) do
             if professionTranslation == prof.name then
                 display = prof.enabled
                 break
@@ -233,89 +228,119 @@ function addonTable.MainFrame.UpdateUI()
     
     local enabledCategories = GetSortedProfessions()
     
+    -- no profession to display
+    if tLength(enabledCategories) == 0 then
+        addonTable.MainFrame.frame:Hide()
+        return
+    end
+
     -- Assign positions: first two in row 0 (col 0 and 1), Fishing in row 1 col 0
     local positions = {}
     local topRow = {}
     for _, category in ipairs(enabledCategories) do
         if category == "FISHING" then
-            positions[category] = {col = 0, row = 1}
-        elseif #topRow < 2 then
+            table.insert(positions, {cat = category, col = 0, row = 1})
+        elseif tLength(topRow) < 2 then
             table.insert(topRow, category)
         end
     end
     -- Assign top row positions
     for i, category in ipairs(topRow) do
-        positions[category] = {col = i-1, row = 0}
+        table.insert(positions, {cat = category, col = i-1, row = 0})
     end
-    
-    local professionSeting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
+
+    table.sort(positions, function(a, b)
+        return (2*a.row+a.col) < (2*b.row+b.col)
+    end)
+
+    local professionSetting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     local showTotal = addonTable.Config.Get(addonTable.Config.Options.SHOW_TOTAL)
-    local itemsPerRow = addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT) 
+    local itemsPerRow = addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT)
+    local displayFishing = professionSetting["FISHING"].display
+
     -- Now position the categories
     local rowIconY = 0
-    for category, pos in pairs(positions) do
-        local items = addonTable.MainFrame.Counts[category]
-        if pos then
-            local professionTranslation = addonTable.ProfessionTranslate[category]
-            local colIcon = 0
+    
+    --reset frameWidth and frameHeight cause we have profession !!
+    frameWidth = 0
+    frameHeight = 0
 
-            local x = 10 + pos.col * (sectionWidth + sectionXSpacing)
-            local y = -35 - pos.row * (headerHeight - rowIconY)
-            local iconY = y - headerHeight
-            rowIconY = iconY
-            -- Create or reposition header
-            if not addonTable.MainFrame.headers[category] then
-                local header = addonTable.MainFrame.frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                header:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", x, y)
-                header:SetText(professionTranslation)
-                addonTable.MainFrame.headers[category] = header
+    local prevSectionWidth = 0
+    local prevRowIconY = 0
+
+    for _, pos in ipairs(positions) do
+        local category = pos.cat
+        local items = addonTable.MainFrame.Counts[category]
+        local professionTranslation = addonTable.ProfessionTranslate[category]
+        local colIcon = 0
+        local sectionWidth = (professionSetting[category].icon_width + iconSpacingX) * itemsPerRow  + sectionXSpacing
+
+        local x = 10 + pos.col * prevSectionWidth
+        local y = -35 + pos.row * (prevRowIconY - headerHeight)
+        local iconY = y - headerHeight
+        rowIconY = iconY
+        -- Create or reposition header
+        if not addonTable.MainFrame.headers[category] then
+            local header = addonTable.MainFrame.frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            header:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", x, y)
+            header:SetText(professionTranslation)
+            addonTable.MainFrame.headers[category] = header
+        else
+            addonTable.MainFrame.headers[category]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", x, y)
+            if category == "FISHING" and displayFishing == false then
+                addonTable.MainFrame.headers[category]:Hide()
             else
-                addonTable.MainFrame.headers[category]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", x, y)
                 addonTable.MainFrame.headers[category]:Show()
             end
-            for _, info in ipairs(items) do
-                local itemID = info[1]
-                local count = info[2]
-                local total = info[3]
-                local item = info[4]
-                if C_Item.GetItemInfo(itemID) then
-                    local iconWidth = professionSeting[category].icon_width
-                    local iconHeight = professionSeting[category].icon_height
-                    if not addonTable.MainFrame.icons[itemID] then
-                        addonTable.MainFrame.icons[itemID] = addonTable.MainFrame.CreateIcon(addonTable.MainFrame.frame, itemID, item.quality, iconWidth, iconHeight)
-                    end
-                    addonTable.MainFrame.icons[itemID]:SetSize(iconWidth, iconHeight)
-
-                    local iconX = x + colIcon * (iconWidth + iconSpacingX)
-                    addonTable.MainFrame.icons[itemID]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", iconX, rowIconY)
-                    addonTable.MainFrame.icons[itemID]:Show()
-                    local displayCount = count
-                    if showTotal then
-                        displayCount = total
-                    end
-                    addonTable.MainFrame.icons[itemID].text:SetText(tostring(displayCount))
-                    local colorForProfession = addonTable.Colors.GetColorForValue(professionTranslation, displayCount)
-                    addonTable.MainFrame.icons[itemID].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
-                    colIcon = colIcon + 1
-                    if colIcon >= itemsPerRow then
-                        colIcon = 0
-                        rowIconY = rowIconY - (iconHeight + 20)
-                    end
+        end
+        for _, info in ipairs(items) do
+            local itemID = info[1]
+            local count = info[2]
+            local total = info[3]
+            local item = info[4]
+            if C_Item.GetItemInfo(itemID) then
+                local iconWidth = professionSetting[category].icon_width
+                local iconHeight = professionSetting[category].icon_height
+                if not addonTable.MainFrame.icons[itemID] then
+                    addonTable.MainFrame.icons[itemID] = addonTable.MainFrame.CreateIcon(addonTable.MainFrame.frame, itemID, item.quality, iconWidth, iconHeight)
                 end
-            end
-            AdjustFrameSize()
-        else
-            -- Hide header if exists
-            if addonTable.MainFrame.headers[category] then
-                addonTable.MainFrame.headers[category]:Hide()
-            end
-            -- Hide icons for this category
-            for _, info in ipairs(items) do
-                local itemID = info[1]
-                if addonTable.MainFrame.icons[itemID] then
+                addonTable.MainFrame.icons[itemID]:SetSize(iconWidth, iconHeight)
+
+                local iconX = x + colIcon * (iconWidth + iconSpacingX)
+                addonTable.MainFrame.icons[itemID]:SetPoint("TOPLEFT", addonTable.MainFrame.frame, "TOPLEFT", iconX, rowIconY)
+                if category == "FISHING" and displayFishing == false then
                     addonTable.MainFrame.icons[itemID]:Hide()
+                else
+                    addonTable.MainFrame.icons[itemID]:Show()
+                end
+                local displayCount = count
+                if showTotal then
+                    displayCount = total
+                end
+                addonTable.MainFrame.icons[itemID].text:SetText(tostring(displayCount))
+                local colorForProfession = addonTable.Colors.GetColorForValue(professionTranslation, displayCount)
+                addonTable.MainFrame.icons[itemID].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
+                colIcon = colIcon + 1
+                if colIcon >= itemsPerRow then
+                    colIcon = 0
+                    rowIconY = rowIconY - (iconHeight + 20)
                 end
             end
         end
+        if category == "FISHING" and displayFishing == false then
+            rowIconY = prevRowIconY
+        end
+        if pos.row == 0 then
+            frameWidth = frameWidth + sectionWidth
+        end
+        -- numbers are negative here
+        if prevRowIconY > rowIconY then
+            frameHeight = rowIconY - (professionSetting[category].icon_height + 20 + 20) -- text and padding
+            prevRowIconY = rowIconY
+        end
+        prevSectionWidth = sectionWidth
+    end
+    if frameWidth ~= 0 and frameHeight ~= 0 then
+        addonTable.MainFrame.frame:SetSize(frameWidth, -frameHeight)
     end
 end
