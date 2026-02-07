@@ -56,6 +56,21 @@ function panel:GetOptionInsetPanel()
         self.showTotal:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
         self.showTotal:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
         optionsInset:AddChild(self.showTotal)
+
+        self.displayInRestZone = AceGUI:Create("CheckBox")
+        self.displayInRestZone.message = {
+            name = addonTable.Locales.DISPLAY_IN_REPO_ZONE,
+            description = addonTable.Locales.DISPLAY_IN_REPO_ZONE_SUB
+        }
+        self.displayInRestZone:SetFullWidth(true)
+        self.displayInRestZone:SetLabel(addonTable.Locales.DISPLAY_IN_REPO_ZONE)
+        self.displayInRestZone:SetValue(addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE))
+        self.displayInRestZone:SetCallback("OnValueChanged", function(_, _, value)
+            addonTable.Config.Set(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE, value)
+        end)
+        self.displayInRestZone:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.displayInRestZone:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+        optionsInset:AddChild(self.displayInRestZone)
     end
 
     return optionsInset
@@ -223,6 +238,7 @@ function panel.refresh()
         local professionsConfig = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
         panel.showInInstance:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES))
         panel.showTotal:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_TOTAL))
+        panel.displayInRestZone:SetValue(addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE))
         panel.iconPerRowSlider:SetValue(addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT))
         for _, prof in ipairs(professionsConfig) do
             if panel.prof.iconWidthSlider then

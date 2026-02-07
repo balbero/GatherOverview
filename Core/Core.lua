@@ -33,13 +33,14 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("SKILL_LINES_CHANGED")
 frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 frame:RegisterEvent("BAG_UPDATE_DELAYED")
+frame:RegisterEvent("PLAYER_UPDATE_RESTING")
 frame:SetScript("OnEvent", function(_, eventName, data)
   if eventName == "ADDON_LOADED" and data == "GatherOverview" then
     addonTable.Core.Initialize()
   elseif eventName == "SKILL_LINES_CHANGED" then
     -- Profession skill change
     addonTable.Core.UpdateProfessionEnabled()
-  elseif eventName == "ZONE_CHANGED_NEW_AREA" then
+  elseif eventName == "ZONE_CHANGED_NEW_AREA" or eventName == "PLAYER_UPDATE_RESTING" then
     -- Player change zone
     addonTable.MainFrame.ToggleIfNeeded()
   elseif eventName == "BAG_UPDATE_DELAYED" or eventName == "PLAYER_LOGIN" then

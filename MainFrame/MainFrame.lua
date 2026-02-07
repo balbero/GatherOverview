@@ -21,13 +21,20 @@ end
 
 function addonTable.MainFrame.ToggleIfNeeded()
     local inInstance, _ = IsInInstance()
-    if inInstance and addonTable.Config.Get("ShowInInstances") == false then
+    if inInstance and addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES) == false then
+        addonTable.MainFrame.frame:Hide()
+        return
+    end
+    local isInReposZone = IsResting()
+    if isInReposZone and addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE) == false then
         addonTable.MainFrame.frame:Hide()
         return
     end
     -- Hide entirely if not running on Retail
     if not addonTable.Constants.IsRetail then
-        if addonTable.MainFrame.frame then addonTable.MainFrame.frame:Hide() end
+        if addonTable.MainFrame.frame then 
+            addonTable.MainFrame.frame:Hide() 
+        end
         return
     end
     local mapID = C_Map.GetBestMapForUnit("player")
@@ -145,6 +152,7 @@ function addonTable.MainFrame.CreateIcon(parent, itemId, quality, iconW, iconH)
     icon:SetTexture(C_Item.GetItemIconByID(itemId))
 
     -- Quality
+    -- Professions-ChatIcon-Quality-Tier1:H:L::y
     -- Bronze: |A:Professions-ChatIcon-Quality-Tier1:17:15::1|a
     -- Silver: |A:Professions-ChatIcon-Quality-Tier2:17:23::1|a
     -- Gold: |A:Professions-ChatIcon-Quality-Tier3:17:18::1|a
@@ -221,7 +229,12 @@ function addonTable.MainFrame.UpdateUI()
         return
     end
     local inInstance, _ = IsInInstance()
-    if inInstance and addonTable.Config.Get("ShowInInstances") == false then
+    if inInstance and addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES) == false then
+        addonTable.MainFrame.frame:Hide()
+        return
+    end
+    local isInReposZone = IsResting()
+    if isInReposZone and addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE) == false then
         addonTable.MainFrame.frame:Hide()
         return
     end

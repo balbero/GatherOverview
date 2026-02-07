@@ -66,6 +66,7 @@ local settings = {
     ICON_WITDH = {key="IconWidth", default = 32},
     ICON_HEIGHT = {key="IconHeight", default = 32},
     ROW_AMOUNT = {key="RowAmount", default = 3},
+    DISPLAY_IN_REPO_ZONE = {key = "DisplayInRepoZone", default=true}
 }
 
 for key, details in pairs(settings) do

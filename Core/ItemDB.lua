@@ -40,13 +40,10 @@ addonTable.ItemDB = {
         -- Midnight
         {id = 237359, quality=ONESTAR, extension=MN}, -- Refulgent Copper Ore 1 star
         {id = 237361, quality=TWOSTAR, extension=MN}, -- Refulgent Copper Ore 2 star
-        -- PLACE HOLDER FOR 3 star
         {id = 237362, quality=ONESTAR, extension=MN}, -- Umbral Tin Ore 1 star
         {id = 237363, quality=TWOSTAR, extension=MN}, -- Umbral Tin Ore 2 star
-        -- PLACE HOLDER FOR 3 star
         {id = 237364, quality=ONESTAR, extension=MN}, -- Brilliant Silver Ore 1 star
         {id = 237365, quality=TWOSTAR, extension=MN}, -- Brilliant Silver Ore 2 star
-        -- PLACE HOLDER FOR 3 star
         {id = 237366, quality=NONE, extension=MN}, -- Dazzling Thorium
     },
     HERBALISM = {
@@ -73,19 +70,15 @@ addonTable.ItemDB = {
         -- Midnight
         {id = 236774, quality=ONESTAR, extension=MN}, -- Azeroot Rose 1 star
         {id = 236775, quality=TWOSTAR, extension=MN}, -- Azeroot Rose 2 star
-        -- PLACE HOLDER FOR 3 star
         {id = 236761, quality=ONESTAR, extension=MN}, -- Tranquility Bloom 1 star
         {id = 236767, quality=TWOSTAR, extension=MN}, -- Tranquility Bloom 2 star
-        -- PLACE HOLDER FOR 3 star
         {id = 236770, quality=ONESTAR, extension=MN}, -- Sanguithorn 1 star
         {id = 236771, quality=TWOSTAR, extension=MN}, -- Sanguithorn 2 star
-        -- PLACE HOLDER FOR 3 star
         {id = 236776, quality=ONESTAR, extension=MN}, -- Argentleaf 1 star
         {id = 236777, quality=TWOSTAR, extension=MN}, -- Argentleaf 2 star
-        -- PLACE HOLDER FOR 3 star
         {id = 236778, quality=ONESTAR, extension=MN}, -- Mana Lily 1 star
         {id = 236779, quality=TWOSTAR, extension=MN}, -- Mana Lily 2 star
-        -- PLACE HOLDER FOR 3 star
+        {id = 236780, quality=NONE, extension=MN}, -- nocturnal-lotus
     },        
     SKINNING = {
         -- The War Within
@@ -104,13 +97,17 @@ addonTable.ItemDB = {
         -- Midnight
         {id = 238511, quality=ONESTAR, extension=MN}, -- Void-Tempered Leather 1 star
         {id = 238512, quality=TWOSTAR, extension=MN}, -- Void-Tempered Leather 2 star
-        -- PLACE HOLDER FOR 3 star
         {id = 238513, quality=ONESTAR, extension=MN}, -- Void-Tempered Scales 1 star
         {id = 238514, quality=TWOSTAR, extension=MN}, -- Void-Tempered Scales 2 star
-        -- PLACE HOLDER FOR 3 star
         {id = 238520, quality=ONESTAR, extension=MN}, -- Void-Tempered Plating 1 star
         {id = 238521, quality=TWOSTAR, extension=MN}, -- Void-Tempered Plating 2 star
-        -- PLACE HOLDER FOR 3 star
+        {id = 238518, quality=ONESTAR, extension=MN}, -- Void-Tempered Hide 1 star
+        {id = 238519, quality=TWOSTAR, extension=MN}, -- Void-Tempered Hide 2 star
+        {id = 238523, quality=NONE, extension=MN}, -- Carving Canine
+        {id = 238522, quality=NONE, extension=MN}, -- Peerless Plumage
+        {id = 238525, quality=NONE, extension=MN}, -- Fantastic Fur
+        {id = 238529, quality=NONE, extension=MN}, -- Majestic Hide
+        {id = 238530, quality=NONE, extension=MN}, -- Majestic Fin
     },
     FISHING = {
         -- The War Within
