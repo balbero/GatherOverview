@@ -73,6 +73,8 @@ L["DISPLAY_FISHING"] = "Display fishing resources"
 L["DISPLAY_FISHING_SUB"] = "Display fishing resources on main frame. Fishing resources are many and can increase fundamentally the frame size."
 L["DISPLAY_IN_REPO_ZONE"] = "Display in resting areas"
 L["DISPLAY_IN_REPO_ZONE_SUB"] = "Display the main frame in resting areas (like cities, inn...)."
+L["SHOW_IN_COMBAT"] = "Display during combat"
+L["SHOW_IN_COMBAT_SUB"] = "Display the main frame when player is in combat."
 
 local L = Locales.frFR
 -- French (FR) Translations
@@ -142,3 +144,5 @@ L["DISPLAY_FISHING"] = "Afficher les ressources de pêche"
 L["DISPLAY_FISHING_SUB"] = "Affiche les ressources de pêche. Les ressources de pêche sont nombreuses et peuvent augmenter la taille de la fenêtre de manière importante."
 L["DISPLAY_IN_REPO_ZONE"] = "Afficher dans les zonnes de repos"
 L["DISPLAY_IN_REPO_ZONE_SUB"] = "Afficher la fenêtre principale dans les zonnes de repos (villes, auberges...)."
+L["SHOW_IN_COMBAT"] = "Afficher pendant les combats"
+L["SHOW_IN_COMBAT_SUB"] = "Afficher la fenêtre principale pendant les combats"

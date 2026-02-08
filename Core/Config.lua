@@ -66,7 +66,8 @@ local settings = {
     ICON_WITDH = {key="IconWidth", default = 32},
     ICON_HEIGHT = {key="IconHeight", default = 32},
     ROW_AMOUNT = {key="RowAmount", default = 3},
-    DISPLAY_IN_REPO_ZONE = {key = "DisplayInRepoZone", default=true}
+    DISPLAY_IN_REPO_ZONE = {key = "DisplayInRepoZone", default=true},
+    SHOW_IN_COMBAT = {key = "ShowInCombat", default=true}
 }
 
 for key, details in pairs(settings) do
@@ -124,7 +125,7 @@ end
 
 function addonTable.Config.Set(name, value)
   if RawSet(name, value) then
-    print("Setting changed: " .. name .. " -> " .. tostring(value))
+    addonTable.Utilities.Message("Setting changed: " .. name .. " -> " .. tostring(value))
   end
 end
 
@@ -236,17 +237,14 @@ function addonTable.Config.Get(name)
   elseif name:find("%.") == nil then
     return addonTable.Config.CurrentProfile[name]
   else
-    print("'.' found in " .. name .. " traversing tree")
     local tree = {strsplit(".", name)}
     local root = addonTable.Config.CurrentProfile
     for i = 1, #tree do
-      print(tree[i] .. " : " .. root[tree[i]])
       root = root[tree[i]]
       if root == nil then
         break
       end
     end
-      print("final value : " .. root)
     return root
   end
 end

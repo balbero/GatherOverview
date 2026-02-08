@@ -4,11 +4,22 @@ addonTable.MainFrame = {}
 addonTable.MainFrame.labels = {}
 addonTable.MainFrame.Counts = {}
 
+local function Nop(...)
+end
+GetItemReagentQualityByItemInfo = C_TradeSkillUI and C_TradeSkillUI.GetItemReagentQualityByItemInfo or Nop
+
 local headerHeight = 20
 local iconSpacingX = 10
 local frameWidth = 350
 local frameHeight = 800
 local sectionXSpacing = 10
+
+
+local function ShouldHideFrame()
+    return (IsInInstance() and addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES) == false) or
+        (IsResting() and addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE) == false) or
+        (PlayerIsInCombat() and addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT) == false)
+end
 
 function addonTable.MainFrame.RefreshLabels()
     for itemID, data in pairs(addonTable.MainFrame.labels) do
@@ -20,16 +31,12 @@ function addonTable.MainFrame.RefreshLabels()
 end
 
 function addonTable.MainFrame.ToggleIfNeeded()
-    local inInstance, _ = IsInInstance()
-    if inInstance and addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES) == false then
+    
+    if ShouldHideFrame() then
         addonTable.MainFrame.frame:Hide()
         return
     end
-    local isInReposZone = IsResting()
-    if isInReposZone and addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE) == false then
-        addonTable.MainFrame.frame:Hide()
-        return
-    end
+
     -- Hide entirely if not running on Retail
     if not addonTable.Constants.IsRetail then
         if addonTable.MainFrame.frame then 
@@ -55,7 +62,7 @@ function addonTable.MainFrame.ToggleIfNeeded()
     local showFrame = professionsConfig.MINING.enabled or
                       professionsConfig.HERBALISM.enabled or
                       professionsConfig.SKINNING.enabled or
-                      professionsConfig.FISHING.enabled
+                      (professionsConfig.FISHING.enabled and professionsConfig.FISHING.display)
 
     if hide or showFrame == false then
         addonTable.MainFrame.frame:Hide()
@@ -143,29 +150,25 @@ function addonTable.MainFrame.Initialize()
     end
 end
 
-function addonTable.MainFrame.CreateIcon(parent, itemId, quality, iconW, iconH)
+function addonTable.MainFrame.CreateIcon(parent, itemId)
     local button = CreateFrame("Frame", nil, parent)
     -- button:SetSize(iconW, iconH)
 
     local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints()
     icon:SetTexture(C_Item.GetItemIconByID(itemId))
+    local quality = GetItemReagentQualityByItemInfo(itemId)
 
     -- Quality
     -- Professions-ChatIcon-Quality-Tier1:H:L::y
     -- Bronze: |A:Professions-ChatIcon-Quality-Tier1:17:15::1|a
     -- Silver: |A:Professions-ChatIcon-Quality-Tier2:17:23::1|a
     -- Gold: |A:Professions-ChatIcon-Quality-Tier3:17:18::1|a
-    if quality ~= 0 then
+    if quality then
         local qualityText = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         qualityText:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
-        if quality == 1 then
-            qualityText:SetText("|A:Professions-ChatIcon-Quality-Tier1:17:15::1|a")
-        elseif quality == 2 then
-            qualityText:SetText("|A:Professions-ChatIcon-Quality-Tier2:17:23::1|a")
-        elseif quality == 3 then
-            qualityText:SetText("|A:Professions-ChatIcon-Quality-Tier3:17:18::1|a")
-        end
+        local text = "|A:Professions-Icon-Quality-Tier"..tostring(quality)..":20:20|a"
+        qualityText:SetText(text)
     end
 
     local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -228,15 +231,13 @@ function addonTable.MainFrame.UpdateUI()
         addonTable.MainFrame.frame:Hide()
         return
     end
-    local inInstance, _ = IsInInstance()
-    if inInstance and addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES) == false then
+    if ShouldHideFrame() then
         addonTable.MainFrame.frame:Hide()
         return
     end
-    local isInReposZone = IsResting()
-    if isInReposZone and addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE) == false then
-        addonTable.MainFrame.frame:Hide()
-        return
+
+    if addonTable.MainFrame.frame:IsShown() == false then
+        addonTable.MainFrame.frame:Show()
     end
     
     local enabledCategories = GetSortedProfessions()
@@ -315,7 +316,7 @@ function addonTable.MainFrame.UpdateUI()
                 local iconWidth = professionSetting[category].icon_width
                 local iconHeight = professionSetting[category].icon_height
                 if not addonTable.MainFrame.icons[itemID] then
-                    addonTable.MainFrame.icons[itemID] = addonTable.MainFrame.CreateIcon(addonTable.MainFrame.frame, itemID, item.quality, iconWidth, iconHeight)
+                    addonTable.MainFrame.icons[itemID] = addonTable.MainFrame.CreateIcon(addonTable.MainFrame.frame, itemID)
                 end
                 addonTable.MainFrame.icons[itemID]:SetSize(iconWidth, iconHeight)
 

@@ -71,6 +71,21 @@ function panel:GetOptionInsetPanel()
         self.displayInRestZone:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
         self.displayInRestZone:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
         optionsInset:AddChild(self.displayInRestZone)
+
+        self.showInCombat = AceGUI:Create("CheckBox")
+        self.showInCombat.message = {
+            name = addonTable.Locales.SHOW_IN_COMBAT,
+            description = addonTable.Locales.SHOW_IN_COMBAT_SUB
+        }
+        self.showInCombat:SetFullWidth(true)
+        self.showInCombat:SetLabel(addonTable.Locales.SHOW_IN_COMBAT)
+        self.showInCombat:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT))
+        self.showInCombat:SetCallback("OnValueChanged", function(_, _, value)
+            addonTable.Config.Set(addonTable.Config.Options.SHOW_IN_COMBAT, value)
+        end)
+        self.showInCombat:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.showInCombat:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+        optionsInset:AddChild(self.showInCombat)
     end
 
     return optionsInset
@@ -239,6 +254,7 @@ function panel.refresh()
         panel.showInInstance:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES))
         panel.showTotal:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_TOTAL))
         panel.displayInRestZone:SetValue(addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE))
+        panel.showInCombat:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT))
         panel.iconPerRowSlider:SetValue(addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT))
         for _, prof in ipairs(professionsConfig) do
             if panel.prof.iconWidthSlider then
