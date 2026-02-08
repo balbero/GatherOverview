@@ -16,9 +16,68 @@ local sectionXSpacing = 10
 
 
 local function ShouldHideFrame()
+    local professionsConfig = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
+    local showFrame = professionsConfig.MINING.enabled or
+                      professionsConfig.HERBALISM.enabled or
+                      professionsConfig.SKINNING.enabled or
+                      (professionsConfig.FISHING.enabled and professionsConfig.FISHING.display)
+
     return (IsInInstance() and addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES) == false) or
         (IsResting() and addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE) == false) or
-        (PlayerIsInCombat() and addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT) == false)
+        (PlayerIsInCombat() and addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT) == false) or
+        not showFrame or
+        not addonTable.Constants.IsRetail
+end
+
+local function GetSortedProfessions()
+    local professionSetting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
+    -- Get player's learned professions
+    local prof1, prof2, _, fishing = GetProfessions()
+    local learnedProfessions = {}
+    if prof1 then
+        local name = GetProfessionInfo(prof1)
+        learnedProfessions[name] = true
+    end
+    if prof2 then
+        local name = GetProfessionInfo(prof2)
+        learnedProfessions[name] = true
+    end
+    if fishing then
+        local name = GetProfessionInfo(fishing)
+        learnedProfessions[name] = true
+    end
+        
+    -- Collect enabled and learned categories
+    local enabledCategories = {}
+    for category, _ in pairs(addonTable.MainFrame.Counts) do
+        local professionTranslation = addonTable.ProfessionTranslate[category]
+        local display = false
+        for _, prof in pairs(professionSetting) do
+            if professionTranslation == prof.name then
+                display = prof.enabled
+                break
+            end
+        end
+        if display and learnedProfessions[professionTranslation] then
+            table.insert(enabledCategories, category)
+        end
+    end
+    
+    -- Sort enabled categories: prioritize Mining, Herbalism, Skinning, then Fishing
+    table.sort(enabledCategories, function(a, b)
+        local order = {MINING = 1, HERBALISM = 2, SKINNING = 3, FISHING = 4}
+        return order[a] < order[b]
+    end)
+    return enabledCategories
+end
+
+local function isFishingOnlyDisplayable()
+    local professionSetting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
+    local fishingEnabled = (professionSetting.FISHING.enabled and professionSetting.FISHING.display)
+    local otherEnabled = professionSetting.MINING.enabled or
+                      professionSetting.HERBALISM.enabled or
+                      professionSetting.SKINNING.enabled
+    return fishingEnabled and not otherEnabled
 end
 
 function addonTable.MainFrame.RefreshLabels()
@@ -34,14 +93,6 @@ function addonTable.MainFrame.ToggleIfNeeded()
     
     if ShouldHideFrame() then
         addonTable.MainFrame.frame:Hide()
-        return
-    end
-
-    -- Hide entirely if not running on Retail
-    if not addonTable.Constants.IsRetail then
-        if addonTable.MainFrame.frame then 
-            addonTable.MainFrame.frame:Hide() 
-        end
         return
     end
     local mapID = C_Map.GetBestMapForUnit("player")
@@ -180,57 +231,11 @@ function addonTable.MainFrame.CreateIcon(parent, itemId)
     return button
 end
 
-local function GetSortedProfessions()
-    local professionSetting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
-    -- Get player's learned professions
-    local prof1, prof2, _, fishing = GetProfessions()
-    local learnedProfessions = {}
-    if prof1 then
-        local name = GetProfessionInfo(prof1)
-        learnedProfessions[name] = true
-    end
-    if prof2 then
-        local name = GetProfessionInfo(prof2)
-        learnedProfessions[name] = true
-    end
-    if fishing then
-        local name = GetProfessionInfo(fishing)
-        learnedProfessions[name] = true
-    end
-        
-    -- Collect enabled and learned categories
-    local enabledCategories = {}
-    for category, _ in pairs(addonTable.MainFrame.Counts) do
-        local professionTranslation = addonTable.ProfessionTranslate[category]
-        local display = false
-        for _, prof in pairs(professionSetting) do
-            if professionTranslation == prof.name then
-                display = prof.enabled
-                break
-            end
-        end
-        if display and learnedProfessions[professionTranslation] then
-            table.insert(enabledCategories, category)
-        end
-    end
-    
-    -- Sort enabled categories: prioritize Mining, Herbalism, Skinning, then Fishing
-    table.sort(enabledCategories, function(a, b)
-        local order = {MINING = 1, HERBALISM = 2, SKINNING = 3, FISHING = 4}
-        return order[a] < order[b]
-    end)
-    return enabledCategories
-end
-
 function addonTable.MainFrame.UpdateUI()
     if not addonTable.MainFrame.frame then
         addonTable.MainFrame.Initialize()
     end
-    -- If not retail, hide and skip drawing
-    if not addonTable.Constants.IsRetail then
-        addonTable.MainFrame.frame:Hide()
-        return
-    end
+
     if ShouldHideFrame() then
         addonTable.MainFrame.frame:Hide()
         return
@@ -270,7 +275,7 @@ function addonTable.MainFrame.UpdateUI()
     local professionSetting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     local showTotal = addonTable.Config.Get(addonTable.Config.Options.SHOW_TOTAL)
     local itemsPerRow = addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT)
-    local displayFishing = professionSetting["FISHING"].display
+    local displayFishing = professionSetting.FISHING.display
 
     -- Now position the categories
     local rowIconY = 0
@@ -311,7 +316,6 @@ function addonTable.MainFrame.UpdateUI()
             local itemID = info[1]
             local count = info[2]
             local total = info[3]
-            local item = info[4]
             if C_Item.GetItemInfo(itemID) then
                 local iconWidth = professionSetting[category].icon_width
                 local iconHeight = professionSetting[category].icon_height
@@ -344,7 +348,7 @@ function addonTable.MainFrame.UpdateUI()
         if category == "FISHING" and displayFishing == false then
             rowIconY = prevRowIconY
         end
-        if pos.row == 0 then
+        if pos.row == 0 or isFishingOnlyDisplayable() then
             frameWidth = frameWidth + sectionWidth
         end
         -- numbers are negative here
