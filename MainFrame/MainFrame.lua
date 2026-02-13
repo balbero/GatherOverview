@@ -6,7 +6,7 @@ addonTable.MainFrame.Counts = {}
 
 local function Nop(...)
 end
-GetItemReagentQualityByItemInfo = C_TradeSkillUI and C_TradeSkillUI.GetItemReagentQualityByItemInfo or Nop
+GetItemReagentQualityInfo = C_TradeSkillUI and C_TradeSkillUI.GetItemReagentQualityInfo or Nop
 
 local headerHeight = 20
 local iconSpacingX = 10
@@ -208,17 +208,12 @@ function addonTable.MainFrame.CreateIcon(parent, itemId)
     local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints()
     icon:SetTexture(C_Item.GetItemIconByID(itemId))
-    local quality = GetItemReagentQualityByItemInfo(itemId)
+    local info = GetItemReagentQualityInfo(itemId)
 
-    -- Quality
-    -- Professions-ChatIcon-Quality-Tier1:H:L::y
-    -- Bronze: |A:Professions-ChatIcon-Quality-Tier1:17:15::1|a
-    -- Silver: |A:Professions-ChatIcon-Quality-Tier2:17:23::1|a
-    -- Gold: |A:Professions-ChatIcon-Quality-Tier3:17:18::1|a
-    if quality then
+    if info and info.icon then
         local qualityText = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         qualityText:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
-        local text = "|A:Professions-Icon-Quality-Tier"..tostring(quality)..":20:20|a"
+        local text = "|A:"..info.icon..":20:20|a"
         qualityText:SetText(text)
     end
 
