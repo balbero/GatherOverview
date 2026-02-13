@@ -231,14 +231,9 @@ function addonTable.MainFrame.UpdateUI()
         addonTable.MainFrame.Initialize()
     end
 
-    if ShouldHideFrame() then
-        addonTable.MainFrame.frame:Hide()
-        return
-    end
-
-    if addonTable.MainFrame.frame:IsShown() == false then
-        addonTable.MainFrame.frame:Show()
-    end
+    -- if addonTable.MainFrame.frame:IsShown() == false then
+    --     addonTable.MainFrame.frame:Show()
+    -- end
     
     local enabledCategories = GetSortedProfessions()
     
