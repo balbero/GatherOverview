@@ -212,7 +212,7 @@ function addonTable.MainFrame.CreateIcon(parent, itemId)
 
     if info and info.icon then
         local qualityText = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        qualityText:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
+        qualityText:SetPoint("TOPLEFT", button, "TOPLEFT", -7, 7)
         local text = "|A:"..info.icon..":20:20|a"
         qualityText:SetText(text)
     end
@@ -226,14 +226,34 @@ function addonTable.MainFrame.CreateIcon(parent, itemId)
     return button
 end
 
+local function UpdateToolTip(button, itemId, message)
+    button:SetScript("OnEnter", function(self)
+        if message then
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(C_Item.GetItemInfo(itemId), 1, .82, 0, true)
+            GameTooltip:AddLine(message, 1, 1, 1, true)
+            GameTooltip:Show()
+        end
+    end)
+    button:SetScript("OnLeave", function(self)
+        if message then
+            GameTooltip:Hide()
+        end
+    end)
+end 
+
+local function GetCountValue(displayCount)
+    local ret = displayCount
+    if displayCount > 999 then
+        ret = math.floor(displayCount / 1000) .. "K+"
+    end
+    return ret
+end
+
 function addonTable.MainFrame.UpdateUI()
     if not addonTable.MainFrame.frame then
         addonTable.MainFrame.Initialize()
     end
-
-    -- if addonTable.MainFrame.frame:IsShown() == false then
-    --     addonTable.MainFrame.frame:Show()
-    -- end
     
     local enabledCategories = GetSortedProfessions()
     
@@ -310,7 +330,7 @@ function addonTable.MainFrame.UpdateUI()
                 local iconWidth = professionSetting[category].icon_width
                 local iconHeight = professionSetting[category].icon_height
                 if not addonTable.MainFrame.icons[itemID] then
-                    addonTable.MainFrame.icons[itemID] = addonTable.MainFrame.CreateIcon(addonTable.MainFrame.frame, itemID)
+                    addonTable.MainFrame.icons[itemID] = addonTable.MainFrame.CreateIcon(addonTable.MainFrame.frame, itemID, message)
                 end
                 addonTable.MainFrame.icons[itemID]:SetSize(iconWidth, iconHeight)
 
@@ -325,9 +345,13 @@ function addonTable.MainFrame.UpdateUI()
                 if showTotal then
                     displayCount = total
                 end
-                addonTable.MainFrame.icons[itemID].text:SetText(tostring(displayCount))
+                addonTable.MainFrame.icons[itemID].text:SetText(tostring(GetCountValue(displayCount)))
                 local colorForProfession = addonTable.Colors.GetColorForValue(professionTranslation, displayCount)
                 addonTable.MainFrame.icons[itemID].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
+
+                local message = addonTable.Locales.IN_BAGS .. ": " .. count .. "\n" .. addonTable.Locales.IN_BANK .. ": " .. (total - count) .. "\n" .. addonTable.Locales.TOTAL .. ": " .. total
+                UpdateToolTip(addonTable.MainFrame.icons[itemID], itemID, message)
+
                 colIcon = colIcon + 1
                 if colIcon >= itemsPerRow then
                     colIcon = 0
