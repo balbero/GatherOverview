@@ -1,6 +1,6 @@
-## Interface: 120005, 120001, 120000
+## Interface: 120007, 120005, 120001, 120000
 ## Title: GatherOverview
-## Version: 1.0.5
+## Version: 1.0.6
 ## Author: Faelgorn
 ## Notes: Provides an overview of gathered resources.
 ## Notes-frFR: Fournit une vue d'ensemble des ressources récoltées.
