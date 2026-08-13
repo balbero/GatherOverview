@@ -1,22 +1,53 @@
 ---@class addonTableGatherOverview
 local addonTable = select(2, ...)
 
+local L = addonTable.Locales
+
 addonTable.ProfessionTranslate = {
-    MINING = addonTable.Locales.MINING,
-    HERBALISM = addonTable.Locales.HERBALISM,
-    SKINNING = addonTable.Locales.SKINNING,
-    FISHING = addonTable.Locales.FISHING
+    MINING = L.MINING,
+    HERBALISM = L.HERBALISM,
+    SKINNING = L.SKINNING,
+    FISHING = L.FISHING,
+    OTHER_STUFF = L.OTHER_STUFF
 }
 
--- Quality
-local NONE      = 0
-local ONESTAR   = 1
-local TWOSTAR   = 2
-local THREESTAR = 3
-
 -- Expansion
-local TWW     = 11
-local MN      = 12
+local TWW     = addonTable.Constants.EXT_TWW
+local MN      = addonTable.Constants.EXT_MN
+
+-- profession
+local Mining         = addonTable.Constants.MINING
+local Blacksmith     = addonTable.Constants.BLACKSMITH
+local Herbalism      = addonTable.Constants.HERBALISM
+local Alchemy        = addonTable.Constants.ALCHEMY
+local Skinning       = addonTable.Constants.SKINNING
+local Leatherworking = addonTable.Constants.LEATHERWORKING
+local Enchanting     = addonTable.Constants.ENCHANTING
+local Engineering    = addonTable.Constants.ENGiNEERING
+local Tailoring      = addonTable.Constants.TAILORING
+local Inscription    = addonTable.Constants.INCRIPTION
+local Jewelcrafting  = addonTable.Constants.JEWALCRAFTING
+local Fishing        = addonTable.Constants.FISHING
+local Other          = addonTable.Constants.OTHER_STUFF
+
+addonTable.Profession = {
+    {id = Mining, name = L.MINING},
+    {id = Blacksmith, name = L.BLACKSMITH},
+    {id = Herbalism, name = L.HERBALISM},
+    {id = Alchemy, name = L.ALCHEMY},
+    {id = Skinning, name = L.SKINNING},
+    {id = Leatherworking, name = L.LEATHERWORKING},
+    {id = Enchanting, name = L.ENCHANT},
+    {id = Engineering, name = L.ENGINEER},
+    {id = Tailoring, name = L.TAILORING},
+    {id = Inscription, name = L.INSCRIPTION},
+    {id = Jewelcrafting, name = L.JEWELCRAFTING},
+    {id = Fishing, name = L.FISHING},
+    {id = Other, name = L.OTHER_STUFF},
+}
+
+
+
 
 addonTable.blacklistedZone = {
 }
@@ -79,7 +110,7 @@ addonTable.ItemDB = {
         {id = 236778, extension=MN}, -- Mana Lily 1 star
         {id = 236779, extension=MN}, -- Mana Lily 2 star
         {id = 236780, extension=MN}, -- nocturnal-lotus
-    },       
+    },      
     SKINNING = {
         -- The War Within
         {id = 212670, extension=TWW}, -- Thunderous Hide 1 star
@@ -152,5 +183,47 @@ addonTable.ItemDB = {
         {id = 238382, extension=MN}, -- Gore Guppy
         {id = 238383, extension=MN}, -- Eversong Trout
         {id = 238384, extension=MN}, -- Sunwell Fish
-    }
+    },
+    OTHER_STUFF = {
+        -- mote
+        {id = 236950, extension=MN,profession=Other, sub=L.MOTE}, -- Mote of Primal Energy
+        {id = 236952, extension=MN,profession=Other, sub=L.MOTE}, -- Mote of Pure Void
+        {id = 236951, extension=MN,profession=Other, sub=L.MOTE}, -- Mote of Wild Magic
+        {id = 236949, extension=MN,profession=Other, sub=L.MOTE}, -- Mote of Light
+
+        -- 12.1 particules
+        {id = 274781, extension=MN,profession=Other, sub=L.MOTE}, -- Cursebound Globe
+        {id = 274777, extension=MN,profession=Other, sub=L.MOTE}, -- Neutralized Venom Clot
+
+        -- weekly points
+        -- CatchUp curency Id are hidden
+        -- see : https://www.wowhead.com/search?q=professions+tracker+weekly#currencies
+        -- Other weekly are obtained by completing hidden quests
+        {id = 259188, extension=MN,profession=Alchemy, questId = { 93528 }, sub=L.ALCHEMY}, -- Lightbloomed Spore Sample
+        {id = 259189, extension=MN,profession=Alchemy, questId = { 93529 }, sub=L.ALCHEMY}, -- Aged Cruor
+        {id = 259190, extension=MN,profession=Blacksmith, questId = { 93530 }, sub=L.BLACKSMITH}, -- Thalassian Whestone
+        {id = 259191, extension=MN,profession=Blacksmith, questId = { 93531 }, sub=L.BLACKSMITH}, -- Infused Quenching Oil
+        {id = 259192, extension=MN,profession=Enchanting, questId = { 93532 }, sub=L.ENCHANT}, -- Voidstorm Ashes
+        {id = 259193, extension=MN,profession=Enchanting, questId = { 93533 }, sub=L.ENCHANT}, -- Lost Thalassian Vellum
+        {id = 259193, extension=MN,profession=Enchanting, curencyId=3198, sub=L.ENCHANT}, -- Shimmering Dust Catch up mechanic
+        {id = 259194, extension=MN,profession=Engineering, questId = { 93534 }, sub=L.ENGINEER}, -- Dance Gear
+        {id = 259195, extension=MN,profession=Engineering, questId = { 93535 }, sub=L.ENGINEER}, -- Dawn Capacitor
+        {id = 238465, extension=MN,profession=Herbalism, questId = { 81425, 81426, 81427, 81428, 81429 }, sub=L.HERBALISM}, -- Thalassian Phoenix Plume
+        {id = 238466, extension=MN,profession=Herbalism, questId = { 81430 }, sub=L.HERBALISM}, -- Thalassian Phoenix Tail
+        {id = 238467, extension=MN,profession=Herbalism, curencyId=3196, sub=L.HERBALISM}, -- Thalassian Phoenix Ember catchup
+        {id = 259196, extension=MN,profession=Inscription, questId = { 93536 }, sub=L.INSCRIPTION}, -- Brilliant Phoenix Ink
+        {id = 259197, extension=MN,profession=Inscription, questId = { 93537 }, sub=L.INSCRIPTION}, -- Loa-Blessed Rune
+        {id = 259199, extension=MN,profession=Jewelcrafting, questId = { 93539 }, sub=L.JEWELCRAFTING}, -- Harandar Stone Sample
+        {id = 259198, extension=MN,profession=Jewelcrafting, questId = { 93538 }, sub=L.JEWELCRAFTING}, -- Void-Touched Eversong Diamond Fragments
+        {id = 259200, extension=MN,profession=Leatherworking, questId = { 93540 }, sub=L.LEATHERWORKING}, -- Amani Tanning Oil
+        {id = 259201, extension=MN,profession=Leatherworking, questId = { 93541 }, sub=L.LEATHERWORKING}, -- Thalassian Mana Oil
+        {id = 237496, extension=MN,profession=Mining, questId = { 88673, 88674, 88675, 88676, 88677 }, sub=L.MINING}, -- Igneous Rock Specimen
+        {id = 237506, extension=MN,profession=Mining, questId = { 88678 }, sub=L.MINING}, -- Septarian Nodule
+        {id = 237507, extension=MN,profession=Mining, curencyId=3192, sub=L.MINING}, -- Cloudy Quartz Catch up mechanic
+        {id = 238625, extension=MN,profession=Skinning, questId = { 88534, 88549, 88536, 88537, 88530 }, sub=L.SKINNING}, -- Fine Void-Tempered Hide
+        {id = 238626, extension=MN,profession=Skinning, questId = { 88529 }, sub=L.SKINNING}, -- Mana-Infused Bone
+        {id = 238627, extension=MN,profession=Skinning, curencyId=3191, sub=L.SKINNING}, -- Manafused Sample Catch up mechanic
+        {id = 259202, extension=MN,profession=Tailoring, questId = { 93542 }, sub=L.TAILORING}, -- Embroidered Memento
+        {id = 259203, extension=MN,profession=Tailoring, questId = { 93543 }, sub=L.TAILORING}, -- Finely Woven Lynx Collar
+    },
 }

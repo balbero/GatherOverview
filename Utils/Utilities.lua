@@ -16,6 +16,7 @@ function addonTable.Utilities.GetFontSize (fontString)
 end
 
 function tPrint (tbl, indent)
+  if tLength(tbl) == 0 then return "..table empty!" end
   if not indent then indent = 0 end
   local toprint = string.rep(" ", indent) .. "{\r\n"
   indent = indent + 2 
@@ -45,3 +46,5 @@ function tLength(T)
   for _ in pairs(T) do count = count + 1 end
   return count
 end
+
+

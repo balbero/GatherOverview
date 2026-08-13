@@ -1,6 +1,10 @@
 ---@class addonTableGatherOverview
 local addonTable = select(2, ...)
 
+local learnedProfessions = {}
+addonTable.Core.learnedProfessions = learnedProfessions
+
+
 function addonTable.Core.Initialize()
   addonTable.Utilities.Message(addonTable.Locales.WELCOME_MSG)
   local version = C_AddOns.GetAddOnMetadata("GatherOverview", "Version")
@@ -15,12 +19,14 @@ function addonTable.Core.Initialize()
 end
 
 function addonTable.Core.UpdateProfessionEnabled()
-    local learnedProfessions = {}
     for _, profIndex in pairs({GetProfessions()}) do
       local name = GetProfessionInfo(profIndex)
       learnedProfessions[name] = true
 	  end
-    
+
+    -- Let the possibilities to display OTHER STUFF category
+    learnedProfessions[addonTable.Locales.OTHER_STUFF] = true
+
     local professionsConfig = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     for _, prof in pairs(professionsConfig) do
         prof.enabled = learnedProfessions[prof.name] or false
@@ -29,7 +35,6 @@ end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
-frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("SKILL_LINES_CHANGED")
 frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 frame:RegisterEvent("BAG_UPDATE_DELAYED")
@@ -51,7 +56,7 @@ frame:SetScript("OnEvent", function(_, eventName, data)
     addonTable.MainFrame.UpdateUI()
     -- Player change zone, is resting or enter/leave combat
     addonTable.MainFrame.ToggleIfNeeded()
-  elseif eventName == "BAG_UPDATE_DELAYED" or eventName == "PLAYER_LOGIN" then
+  elseif eventName == "BAG_UPDATE_DELAYED" then
     addonTable.MainFrame.ScanBags()
     -- Update Item count display
     addonTable.MainFrame.UpdateUI()

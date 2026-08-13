@@ -5,6 +5,5 @@ addonTable.Utilities = {}
 addonTable.Components = {}
 addonTable.OptionDialog = {}
 addonTable.Colors = {}
-addonTable.Dialogs = {}
 
 GatherOverview = {}
