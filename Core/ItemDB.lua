@@ -183,6 +183,18 @@ addonTable.ItemDB = {
         {id = 238382, extension=MN}, -- Gore Guppy
         {id = 238383, extension=MN}, -- Eversong Trout
         {id = 238384, extension=MN}, -- Sunwell Fish
+        {id = 274592, extension=MN}, -- Dirty Darter
+        {id = 274588, extension=MN}, -- Toxic Tlhapi
+        {id = 279094, extension=MN}, -- Grotesque Sturgeon
+        {id = 274591, extension=MN}, -- Coiled Stargorger
+        {id = 274589, extension=MN}, -- Ula'tek Snakehead
+        {id = 279106, extension=MN}, -- Loathsome Anglerfish
+        {id = 274593, extension=MN}, -- Blightswarmer
+        {id = 274590, extension=MN}, -- Sulfurous Sludgefish
+        {id = 279100, extension=MN}, -- Many-Eyed Flounder
+        {id = 279105, extension=MN}, -- Twin-Headed Snipefish
+        {id = 274594, extension=MN}, -- Polluted Puffer
+        {id = 279091, extension=MN}, -- Oozing Goby
     },
     OTHER_STUFF = {
         -- mote
