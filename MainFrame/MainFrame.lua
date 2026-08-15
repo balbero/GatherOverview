@@ -1,7 +1,6 @@
 ---@class addonTableGatherOverview
 local addonTable = select(2, ...)
 addonTable.MainFrame = {}
-addonTable.MainFrame.labels = {}
 addonTable.MainFrame.Counts = {}
 
 local L = addonTable.Locales
@@ -588,15 +587,21 @@ local function CreateProfessionFrame(idx, category)
         ShowContextMenu({
             { text = L.SHOW_IN_INSTANCES, isActive = not wCfg.hideInInstance, onClick = function()
                 wCfg.hideInInstance = not wCfg.hideInInstance
-                for _, w in ipairs(_windows) do w.UpdateVisibility() end
+                for _, w in ipairs(_windows) do
+                    w.UpdateVisibility()
+                end
             end },
             { text = L.SHOW_IN_COMBAT, isActive = not wCfg.hideDuringCombat, onClick = function()
                 wCfg.hideDuringCombat = not wCfg.hideDuringCombat
-                for _, w in ipairs(_windows) do w.UpdateVisibility() end
+                for _, w in ipairs(_windows) do
+                    w.UpdateVisibility()
+                end
             end },
             { text = L.DISPLAY_IN_REPO_ZONE, isActive = not wCfg.hideInRestingZone, onClick = function()
                 wCfg.hideInRestingZone = not wCfg.hideInRestingZone
-                for _, w in ipairs(_windows) do w.UpdateVisibility() end
+                for _, w in ipairs(_windows) do
+                    w.UpdateVisibility()
+                end
             end },
             "---",
             { text = L.WIDTH, isInput = true,
@@ -604,7 +609,10 @@ local function CreateProfessionFrame(idx, category)
               setValue = function(v)
                   local left, top = frame:GetLeft(), frame:GetTop()
                   frame:SetSize(math.max(MIN_W, v), frame:GetHeight())
-                  if left and top then frame:ClearAllPoints(); frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top) end
+                  if left and top then
+                    frame:ClearAllPoints()
+                    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+                  end
                   wCfg.width = math.floor(frame:GetWidth() + 0.5)
                   SaveWindowConfig(category, wCfg)
               end,
@@ -614,7 +622,10 @@ local function CreateProfessionFrame(idx, category)
               setValue = function(v)
                   local left, top = frame:GetLeft(), frame:GetTop()
                   frame:SetSize(frame:GetWidth(), math.max(MIN_H, v))
-                  if left and top then frame:ClearAllPoints(); frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top) end
+                  if left and top then
+                    frame:ClearAllPoints()
+                    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+                  end
                   wCfg.height = math.floor(frame:GetHeight() + 0.5)
                   SaveWindowConfig(category, wCfg)
               end,
@@ -655,7 +666,6 @@ local function CreateProfessionFrame(idx, category)
             local enabledCategories = GetSortedProfessions()
             for i, cat in ipairs(enabledCategories) do
                 if not _windows[cat] then
-                    print("adding window for : "..cat)
                     _windows[cat] = CreateProfessionFrame(i, cat)
                     _windows[cat].width = math.floor(srcW2 + 0.5)
                     _windows[cat].height = math.floor(srcH2 + 0.5)
@@ -752,7 +762,7 @@ local function CreateProfessionFrame(idx, category)
         if button ~= "LeftButton" or not dragging then return end
         dragging = false
         dragFrame:Hide()
-        
+
         SaveWindowPosition(category, frame)
     end)
     ---------------------------------------------------------------------------
@@ -765,6 +775,7 @@ local function CreateProfessionFrame(idx, category)
     local items = addonTable.MainFrame.Counts[category]
     -- Display the icons of the current profession
     window.icons = {}
+    window.subHeaderText = {}
 
     function window.Refresh()
         if not frame then return end
@@ -777,18 +788,30 @@ local function CreateProfessionFrame(idx, category)
             -- Create icon if the item.profession is equal to the learned profession and  
             -- If item.currencyID exist then call GetCatchUpCurrencyLeft to get the quantity remaining
             -- if item.questId exist then call C_QuestLog.IsQuestFlaggedCompleted(questId), if complete then hide icon
-            local prevSubCatebory = ""
+            local prevSubCategory = ""
+            local rowCount = 0
+            local fullRow = false
             for _, info in ipairs(items) do
                 local item = info[4] -- get the full item data
                 local profName= GetProfessionNameFromIndex(item.profession)
                 if addonTable.Core.learnedProfessions[profName] then
-                    if item.sub ~= prevSubCatebory then
-                        prevSubCatebory = item.sub
-                        -- create header with text equal to item.sub
-                        
-                    end
                     local iconWidth = professionSetting[category].icon_width
                     local iconHeight = professionSetting[category].icon_height
+
+                    if profName ~= prevSubCategory then
+                        prevSubCategory = profName
+                        -- compute Y offset
+                        local offsetY = ((rowIconY - (iconHeight + 20)) * rowCount )
+                        if fullRow then
+                            offsetY = rowIconY * rowCount
+                        end
+                        if rowCount == 0 then
+                            offsetY = -35
+                        end
+                        rowIconY = offsetY -- 20 -- padding for header space
+                        colIcon = 0 -- reset the position of the first icon
+                        fullRow = false -- reset the flag
+                    end
 
 
                     if not window.icons[item.id] then
@@ -801,7 +824,7 @@ local function CreateProfessionFrame(idx, category)
 
                     local bagCount = info[2]
                     local total = info[3]
-                    if item.profession == addonTable.Constants.OTHER_STUFF then 
+                    if item.profession == addonTable.Constants.OTHER_STUFF then
                         local displayCount = bagCount
                         if showTotal then
                             displayCount = total
@@ -817,9 +840,10 @@ local function CreateProfessionFrame(idx, category)
                         if colIcon >= itemsPerRow then
                             colIcon = 0
                             rowIconY = rowIconY - (iconHeight + 20)
+                            rowCount = rowCount + 1
+                            fullRow = true
                         end
                     else
-
                         local totalToCatch = 1
                         if item.curencyId then
                             local quantity = GetCatchUpCurrencyLeft(item.curencyId)
@@ -838,18 +862,19 @@ local function CreateProfessionFrame(idx, category)
                             end
                             window.icons[item.id].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
                             window.icons[item.id]:Show()
-                            
+
                             local message = L.STILL_TO_GET .. ": " .. totalToCatch
                             UpdateToolTip(window.icons[item.id], item.id, message)
-                        
+
                             colIcon = colIcon + 1
                             if colIcon >= itemsPerRow then
                                 colIcon = 0
                                 rowIconY = rowIconY - (iconHeight + 20)
+                                rowCount = rowCount + 1
+                                fullRow = true
                             end
                         end
                     end
-                    
                 end
 
             end
@@ -885,8 +910,6 @@ local function CreateProfessionFrame(idx, category)
                 end
             end
         end
-        
-
         wCfg.width = (professionSetting[category].icon_width + iconSpacingX) * itemsPerRow + iconSpacingX
         wCfg.height = -1 * (rowIconY - (professionSetting[category].icon_height + 20 + 20)) -- text and padding
         frame:SetSize(wCfg.width, wCfg.height)
@@ -901,9 +924,12 @@ local function CreateProfessionFrame(idx, category)
         -- save configuration 
         SaveWindowConfig(category, wCfg)
         -- Per-window instance visibility
-        if wCfg.hideInInstance and IsInInstance() then frame:Hide(); return end
-        if wCfg.hideInRestingZone and IsResting() then frame:Hide(); return end
-        if wCfg.hideDuringCombat and PlayerIsInCombat() then frame:Hide(); return end
+        if (wCfg.hideInInstance and IsInInstance()) or
+           (wCfg.hideInRestingZone and IsResting()) or
+           (wCfg.hideDuringCombat and PlayerIsInCombat()) then
+            frame:Hide()
+            return
+        end
 
         frame:SetAlpha(1)
         frame:EnableMouse(true)
@@ -975,23 +1001,8 @@ function addonTable.MainFrame.UpdateUI()
 
     for _, w in pairs(_windows) do
         w.Refresh()
+        w.UpdateVisibility()
     end
-end
-
-function addonTable.MainFrame.ToggleIfNeeded()
-    local mapID = C_Map.GetBestMapForUnit("player")
-    -- Check upon the blacklisted zone ID
-    -- if mapID is in the blacklist
-    -- then hide the MainFrame
-    -- otherwise show it
-    local hide = false
-    for _, zoneID in pairs(addonTable.blacklistedZone) do
-        if zoneID == mapID then
-            hide = true
-            break
-        end
-    end
-    return hide
 end
 
 function addonTable.MainFrame.ScanBags()

@@ -44,18 +44,16 @@ frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 frame:SetScript("OnEvent", function(_, eventName, data)
   if eventName == "ADDON_LOADED" and data == "GatherOverview" then
     addonTable.Core.Initialize()
+    frame:UnregisterEvent("ADDON_LOADED") -- no need to keep tracking the event
   elseif eventName == "SKILL_LINES_CHANGED" then
     -- Profession skill change
     addonTable.Core.UpdateProfessionEnabled()
     addonTable.MainFrame.UpdateUI()
-    addonTable.MainFrame.ToggleIfNeeded()
   elseif eventName == "ZONE_CHANGED_NEW_AREA" or 
          eventName == "PLAYER_UPDATE_RESTING" or 
          eventName == "PLAYER_REGEN_DISABLED" or 
          eventName == "PLAYER_REGEN_ENABLED" then
     addonTable.MainFrame.UpdateUI()
-    -- Player change zone, is resting or enter/leave combat
-    addonTable.MainFrame.ToggleIfNeeded()
   elseif eventName == "BAG_UPDATE_DELAYED" then
     addonTable.MainFrame.ScanBags()
     -- Update Item count display
