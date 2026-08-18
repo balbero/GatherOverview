@@ -40,15 +40,6 @@ local function GetCatchUpCurrencyLeft(id)
     }
 end
 
-local function GetProfessionNameFromIndex(professionIndex)
-    for _, p in ipairs(addonTable.Profession) do
-        if p.id == professionIndex then
-            return p.name
-        end
-    end
-    addonTable.Utilities.Message("No name for profession index "..professionIndex)
-end
-
 local function GetSortedProfessions()
     local professionSetting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     -- Get player's learned professions
@@ -75,7 +66,7 @@ local function GetSortedProfessions()
         local professionTranslation = addonTable.ProfessionTranslate[category]
         local display = false
         for _, prof in pairs(professionSetting) do
-            if professionTranslation == prof.name then
+            if professionTranslation == addonTable.Config.GetProfessionNameFromIndex(prof.current_profession) then
                 display = prof.enabled
                 break
             end
@@ -151,47 +142,27 @@ end
 --- For db
 --------------------------------------------------
 
-local function EnsureWindowDb()
-    local cfg = addonTable.Config.Get(addonTable.Config.Options.WINDOWS) or {}
-    local professionSetting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
-    for category,_ in pairs(professionSetting) do
-        if not cfg[category] then
-            cfg[category] = {
-                position = nil,
-                width = 375,
-                height = 150,
-                curProfession = category,
-                locked = false,
-                hideInInstance = false,
-                hideInRestingZone = false,
-                hideDuringCombat = false,
-            }
-        end
-    end
-    addonTable.Config.Set(addonTable.Config.Options.WINDOWS, cfg)
-end
-
 local function GetWindowConfig(category)
-    local cfg = addonTable.Config.Get(addonTable.Config.Options.WINDOWS)
+    local cfg = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     return cfg[category]
 end
 
 local function SaveWindowPosition(category, frame)
-    local cfg = addonTable.Config.Get(addonTable.Config.Options.WINDOWS)
+    local cfg = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
 
     local left, top = frame:GetLeft(), frame:GetTop()
     if left and top then
         cfg[category].position = { x = left, y = top }
-        addonTable.Config.Set(addonTable.Config.Options.WINDOWS, cfg)
+        addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, cfg)
         frame:ClearAllPoints()
         frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
     end
 end
 
 local function SaveWindowConfig(category, wCfg)
-    local cfg = addonTable.Config.Get(addonTable.Config.Options.WINDOWS)
+    local cfg = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     cfg[category] = wCfg
-    addonTable.Config.Set(addonTable.Config.Options.WINDOWS, cfg)
+    addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, cfg)
     return cfg
 end
 
@@ -505,7 +476,7 @@ local function CreateProfessionFrame(idx, category)
 
     local window = {}
     window.idx = idx
-    window.curProfession = wCfg.curProfession or category
+    window.category = wCfg.category or category
     window.windowLocked = wCfg.locked or false
 
     local frame = CreateFrame("Frame", "GatherOverview_" .. category, UIParent)
@@ -673,8 +644,6 @@ local function CreateProfessionFrame(idx, category)
                     break
                 end
             end
-            -- Persist count
-            addonTable.Config.Set(addonTable.Config.Options.WINDOWS_COUNT, tLength(_windows))
         else
             window.Destroy()
         end
@@ -777,72 +746,65 @@ local function CreateProfessionFrame(idx, category)
     window.icons = {}
     window.subHeaderText = {}
 
+    -- Helper: Update icon display (text, color, position, tooltip)
+    local function UpdateIconDisplay(itemID, displayValue, message, iconWidth, iconHeight, colIcon, rowIconY)
+        if not window.icons[itemID] then
+            window.icons[itemID] = CreateIcon(window.frame, itemID)
+        end
+        window.icons[itemID]:SetSize(iconWidth, iconHeight)
+        local iconX = 10 + colIcon * (iconWidth + iconSpacingX)
+        window.icons[itemID]:SetPoint("TOPLEFT", window.frame, "TOPLEFT", iconX, rowIconY)
+        window.icons[itemID].text:SetText(tostring(GetCountValue(displayValue)))
+        
+        local color = addonTable.Colors.GetColorForValue(professionTranslation, displayValue)
+        window.icons[itemID].text:SetTextColor(color.r, color.g, color.b, color.a)
+        window.icons[itemID]:Show()
+        UpdateToolTip(window.icons[itemID], itemID, message)
+    end
+
+    -- Helper: Advance layout position
+    local function AdvanceLayoutPos(state, iconHeight)
+        state.colIcon = state.colIcon + 1
+        if state.colIcon >= itemsPerRow then
+            state.colIcon = 0
+            state.rowIconY = state.rowIconY - (iconHeight + 20)
+            state.rowCount = state.rowCount + 1
+            state.fullRow = true
+        end
+    end
+
     function window.Refresh()
         if not frame then return end
-        local colIcon = 0
-        local rowIconY = -35
-        items = addonTable.MainFrame.Counts[window.curProfession]
-        if window.curProfession == "OTHER_STUFF" then
-            -- Create header with item.sub
-            -- Create frame containing each item having same sub category
-            -- Create icon if the item.profession is equal to the learned profession and  
-            -- If item.currencyID exist then call GetCatchUpCurrencyLeft to get the quantity remaining
-            -- if item.questId exist then call C_QuestLog.IsQuestFlaggedCompleted(questId), if complete then hide icon
+        local iconWidth = professionSetting[category].icon_width
+        local iconHeight = professionSetting[category].icon_height
+        local state = { colIcon = 0, rowIconY = -35, rowCount = 0, fullRow = false }
+        
+        items = addonTable.MainFrame.Counts[window.category]
+        if window.category == "OTHER_STUFF" then
             local prevSubCategory = ""
-            local rowCount = 0
-            local fullRow = false
             for _, info in ipairs(items) do
                 local item = info[4] -- get the full item data
-                local profName= GetProfessionNameFromIndex(item.profession)
+                local profName = addonTable.Config.GetProfessionNameFromIndex(item.profession)
                 if addonTable.Core.learnedProfessions[profName] then
-                    local iconWidth = professionSetting[category].icon_width
-                    local iconHeight = professionSetting[category].icon_height
-
+                    -- Handle sub-category header
                     if profName ~= prevSubCategory then
                         prevSubCategory = profName
-                        -- compute Y offset
-                        local offsetY = ((rowIconY - (iconHeight + 20)) * rowCount )
-                        if fullRow then
-                            offsetY = rowIconY * rowCount
+                        local offsetY = -35
+                        if state.rowCount > 0 then
+                            offsetY = state.rowCount * (state.fullRow and state.rowIconY or (state.rowIconY - (iconHeight + 20)))
                         end
-                        if rowCount == 0 then
-                            offsetY = -35
-                        end
-                        rowIconY = offsetY -- 20 -- padding for header space
-                        colIcon = 0 -- reset the position of the first icon
-                        fullRow = false -- reset the flag
+                        state.rowIconY = offsetY
+                        state.colIcon = 0
+                        state.fullRow = false
                     end
-
-
-                    if not window.icons[item.id] then
-                        window.icons[item.id] = CreateIcon(window.frame, item.id)
-                    end
-                    window.icons[item.id]:SetSize(iconWidth, iconHeight)
-                    local iconX = 10 + colIcon * (iconWidth + iconSpacingX)
-                    window.icons[item.id]:SetPoint("TOPLEFT", window.frame, "TOPLEFT", iconX, rowIconY)
-
 
                     local bagCount = info[2]
                     local total = info[3]
+                    local displayCount = showTotal and total or bagCount
                     if item.profession == addonTable.Constants.OTHER_STUFF then
-                        local displayCount = bagCount
-                        if showTotal then
-                            displayCount = total
-                        end
-                        window.icons[item.id].text:SetText(tostring(GetCountValue(displayCount)))
-                        local colorForProfession = addonTable.Colors.GetColorForValue(professionTranslation, displayCount)
-                        window.icons[item.id].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
-
-                        local message = addonTable.Locales.IN_BAGS .. ": " .. bagCount .. "\n" .. addonTable.Locales.IN_BANK .. ": " .. (total - bagCount) .. "\n" .. addonTable.Locales.TOTAL .. ": " .. total
-                        UpdateToolTip(window.icons[item.id], item.id, message)
-
-                        colIcon = colIcon + 1
-                        if colIcon >= itemsPerRow then
-                            colIcon = 0
-                            rowIconY = rowIconY - (iconHeight + 20)
-                            rowCount = rowCount + 1
-                            fullRow = true
-                        end
+                        local message = L.IN_BAGS .. ": " .. bagCount .. "\n" .. L.IN_BANK .. ": " .. (total - bagCount) .. "\n" .. L.TOTAL .. ": " .. total
+                        UpdateIconDisplay(item.id, displayCount, message, iconWidth, iconHeight, state.colIcon, state.rowIconY)
+                        AdvanceLayoutPos(state, iconHeight)
                     else
                         local totalToCatch = 1
                         if item.curencyId then
@@ -852,66 +814,32 @@ local function CreateProfessionFrame(idx, category)
                         if item.questId then
                             totalToCatch = GetMissingCurrencyFromQuest(item)
                         end
-                        if totalToCatch == 0 then
+                        
+                        if totalToCatch == 0 and window.icons[item.id] then
                             window.icons[item.id]:Hide()
                         else
-                            window.icons[item.id].text:SetText(tostring(totalToCatch))
-                            local colorForProfession = addonTable.Colors.red
-                            if totalToCatch < 1 then
-                                colorForProfession = addonTable.Colors.green
-                            end
-                            window.icons[item.id].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
-                            window.icons[item.id]:Show()
-
                             local message = L.STILL_TO_GET .. ": " .. totalToCatch
-                            UpdateToolTip(window.icons[item.id], item.id, message)
-
-                            colIcon = colIcon + 1
-                            if colIcon >= itemsPerRow then
-                                colIcon = 0
-                                rowIconY = rowIconY - (iconHeight + 20)
-                                rowCount = rowCount + 1
-                                fullRow = true
-                            end
+                            UpdateIconDisplay(item.id, totalToCatch, message, iconWidth, iconHeight, state.colIcon, state.rowIconY)
+                            AdvanceLayoutPos(state, iconHeight)
                         end
                     end
                 end
-
             end
         else
             for _, info in ipairs(items) do
                 local itemID = info[1]
                 local count = info[2]
                 local total = info[3]
-                local iconWidth = professionSetting[category].icon_width
-                local iconHeight = professionSetting[category].icon_height
-                if not window.icons[itemID] then
-                    window.icons[itemID] = CreateIcon(window.frame, itemID)
-                end
-                window.icons[itemID]:SetSize(iconWidth, iconHeight)
-                local iconX = 10 + colIcon * (iconWidth + iconSpacingX)
-                window.icons[itemID]:SetPoint("TOPLEFT", window.frame, "TOPLEFT", iconX, rowIconY)
-                window.icons[itemID]:Show()
-                local displayCount = count
-                if showTotal then
-                    displayCount = total
-                end
-                window.icons[itemID].text:SetText(tostring(GetCountValue(displayCount)))
-                local colorForProfession = addonTable.Colors.GetColorForValue(professionTranslation, displayCount)
-                window.icons[itemID].text:SetTextColor(colorForProfession.r, colorForProfession.g, colorForProfession.b, colorForProfession.a)
-
-                local message = addonTable.Locales.IN_BAGS .. ": " .. count .. "\n" .. addonTable.Locales.IN_BANK .. ": " .. (total - count) .. "\n" .. addonTable.Locales.TOTAL .. ": " .. total
-                UpdateToolTip(window.icons[itemID], itemID, message)
-
-                colIcon = colIcon + 1
-                if colIcon >= itemsPerRow then
-                    colIcon = 0
-                    rowIconY = rowIconY - (iconHeight + 20)
-                end
+                local displayCount = showTotal and total or count
+                local message = L.IN_BAGS .. ": " .. count .. "\n" .. L.IN_BANK .. ": " .. (total - count) .. "\n" .. L.TOTAL .. ": " .. total
+                
+                UpdateIconDisplay(itemID, displayCount, message, iconWidth, iconHeight, state.colIcon, state.rowIconY)
+                AdvanceLayoutPos(state, iconHeight)
             end
         end
-        wCfg.width = (professionSetting[category].icon_width + iconSpacingX) * itemsPerRow + iconSpacingX
-        wCfg.height = -1 * (rowIconY - (professionSetting[category].icon_height + 20 + 20)) -- text and padding
+        
+        wCfg.width = (iconWidth + iconSpacingX) * itemsPerRow + iconSpacingX
+        wCfg.height = -1 * (state.rowIconY - (iconHeight + 20 + 20))
         frame:SetSize(wCfg.width, wCfg.height)
     end
 
@@ -949,14 +877,13 @@ local function CreateProfessionFrame(idx, category)
         local runtimeCategory
         for _, w in pairs(_windows) do
             if w == window then
-                runtimeCategory = w.curProfession
+                runtimeCategory = w.category
                 break
             end
         end
         if runtimeCategory then
             wipe(_windows[runtimeCategory])
             _windows[runtimeCategory] = nil
-            addonTable.Config.Set(addonTable.Config.Options.WINDOWS_COUNT, tLength(_windows))
         end
     end
 
@@ -973,18 +900,13 @@ end
 --------------------------------------------------
 
 function addonTable.MainFrame.Initialize()
-    EnsureWindowDb()
 
     addonTable.MainFrame.ScanBags()
 
     local enabledCategories = GetSortedProfessions()
     MAX_WINDOWS = tLength(enabledCategories) + 1 -- +1 for Misc elements
 
-    local winCount = math.max(1, addonTable.Config.Get(addonTable.Config.Options.WINDOWS_COUNT) or 1)
-    addonTable.Config.Set(addonTable.Config.Options.WINDOWS_COUNT, winCount)
-
-
-    for i = winCount + 1, MAX_WINDOWS do
+    for i = 1, MAX_WINDOWS do
         _windows[i] = nil
     end
 

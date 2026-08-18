@@ -128,7 +128,12 @@
         "ToggleDropDownMenu",
         "EXPANSION_FILTER_TEXT",
         "UIDropDownMenu_AddButton",
-        "UIDropDownMenu_CreateInfo"
+        "UIDropDownMenu_CreateInfo",
+        "UIDropDownMenu_SetText",
+        "GossipFrame",
+        "QuestFrame",
+        "DEFAULT",
+        "FONT_SIZE"
     ],
     "Lua.type.weakUnionCheck": true
 }

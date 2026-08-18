@@ -4,13 +4,16 @@ local addonTable = select(2, ...)
 local learnedProfessions = {}
 addonTable.Core.learnedProfessions = learnedProfessions
 
+local L = addonTable.Locales
+
 
 function addonTable.Core.Initialize()
-  addonTable.Utilities.Message(addonTable.Locales.WELCOME_MSG)
+  addonTable.Utilities.Message(L.WELCOME_MSG)
   local version = C_AddOns.GetAddOnMetadata("GatherOverview", "Version")
-  addonTable.Utilities.Message(addonTable.Locales.VERSION .. ":".. version)
-  addonTable.Utilities.Message(addonTable.Locales.TO_OPEN_OPTIONS_X)
+  addonTable.Utilities.Message(L.VERSION .. ":".. version)
+  addonTable.Utilities.Message(L.TO_OPEN_OPTIONS_X)
   -- Initialization code goes here
+  addonTable.InitializeItems()  -- Initialize Item instances from ItemDB
   addonTable.Config.InitializeData()
   addonTable.Core.UpdateProfessionEnabled()  -- Update Enabled Professions on start
   addonTable.SlashCmd.Initialize()
@@ -25,7 +28,7 @@ function addonTable.Core.UpdateProfessionEnabled()
 	  end
 
     -- Let the possibilities to display OTHER STUFF category
-    learnedProfessions[addonTable.Locales.OTHER_STUFF] = true
+    learnedProfessions[L.OTHER_STUFF] = true
 
     local professionsConfig = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     for _, prof in pairs(professionsConfig) do
@@ -49,9 +52,9 @@ frame:SetScript("OnEvent", function(_, eventName, data)
     -- Profession skill change
     addonTable.Core.UpdateProfessionEnabled()
     addonTable.MainFrame.UpdateUI()
-  elseif eventName == "ZONE_CHANGED_NEW_AREA" or 
-         eventName == "PLAYER_UPDATE_RESTING" or 
-         eventName == "PLAYER_REGEN_DISABLED" or 
+  elseif eventName == "ZONE_CHANGED_NEW_AREA" or
+         eventName == "PLAYER_UPDATE_RESTING" or
+         eventName == "PLAYER_REGEN_DISABLED" or
          eventName == "PLAYER_REGEN_ENABLED" then
     addonTable.MainFrame.UpdateUI()
   elseif eventName == "BAG_UPDATE_DELAYED" then

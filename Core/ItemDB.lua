@@ -233,3 +233,28 @@ addonTable.ItemDB = {
         {id = 259203, extension=MN,profession=Tailoring, questId = { 93543 }}, -- Finely Woven Lynx Collar
     },
 }
+
+---Initialise les instances Item depuis la base de données
+---@return table Items organisés par profession
+function addonTable.InitializeItems()
+    local Item = addonTable.Components.Item
+    local items = {}
+
+    for profession, itemList in pairs(addonTable.ItemDB) do
+        items[profession] = {}
+
+        for _, itemData in ipairs(itemList) do
+            local item = Item:new(itemData.id, itemData.extension, profession)
+            table.insert(items[profession], item)
+            if itemData.currencyID then
+                item:setCurrencyId(itemData.currencyID)
+            end
+            if itemData.questId then
+                item:addQuestId(itemData.questId)
+            end
+        end
+    end
+
+    addonTable.Items = items
+    return items
+end

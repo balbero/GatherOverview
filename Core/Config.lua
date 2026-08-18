@@ -9,61 +9,91 @@ local settings = {
     -- Profession settings
     PROFESSIONS = { key = "Professions", default = {
         MINING = {
-            name = addonTable.Locales.MINING,
-            enabled = true,
-            low = 50,
-            low_color = addonTable.Colors.red,
-            medium_color = addonTable.Colors.orange,
-            high = 100,
-            high_color = addonTable.Colors.green,
-            icon_width = 32,
-            icon_height = 32
+          current_profession = addonTable.Constants.MINING,
+          enabled = true,
+          low = 50,
+          low_color = addonTable.Colors.red,
+          medium_color = addonTable.Colors.orange,
+          high = 100,
+          high_color = addonTable.Colors.green,
+          icon_width = 32,
+          icon_height = 32,
+          position = nil,
+          width = 375,
+          height = 150,
+          hideInInstance = false,
+          hideInRestingZone = false,
+          hideDuringCombat = false,
         },
         HERBALISM = {
-            name = addonTable.Locales.HERBALISM,
-            enabled = true,
-            low = 50,
-            low_color = addonTable.Colors.red,
-            medium_color = addonTable.Colors.orange,
-            high = 100,
-            high_color = addonTable.Colors.green,
-            icon_width = 32,
-            icon_height = 32
+          current_profession = addonTable.Constants.HERBALISM,
+          enabled = true,
+          low = 50,
+          low_color = addonTable.Colors.red,
+          medium_color = addonTable.Colors.orange,
+          high = 100,
+          high_color = addonTable.Colors.green,
+          icon_width = 32,
+          icon_height = 32,
+          position = nil,
+          width = 375,
+          height = 150,
+          hideInInstance = false,
+          hideInRestingZone = false,
+          hideDuringCombat = false,
         },
         SKINNING = {
-            name = addonTable.Locales.SKINNING,
-            enabled = true,
-            low = 50,
-            low_color = addonTable.Colors.red,
-            medium_color = addonTable.Colors.orange,
-            high = 100,
-            high_color = addonTable.Colors.green,
-            icon_width = 32,
-            icon_height = 32
+          current_profession = addonTable.Constants.SKINNING,
+          enabled = true,
+          low = 50,
+          low_color = addonTable.Colors.red,
+          medium_color = addonTable.Colors.orange,
+          high = 100,
+          high_color = addonTable.Colors.green,
+          icon_width = 32,
+          icon_height = 32,
+          position = nil,
+          width = 375,
+          height = 150,
+          hideInInstance = false,
+          hideInRestingZone = false,
+          hideDuringCombat = false,
         },
         FISHING = {
-            name = addonTable.Locales.FISHING,
-            enabled = true,
-            display = true,
-            low = 50,
-            low_color = addonTable.Colors.red,
-            medium_color = addonTable.Colors.orange,
-            high = 100,
-            high_color = addonTable.Colors.green,
-            icon_width = 32,
-            icon_height = 32
+          current_profession = addonTable.Constants.FISHING,
+          enabled = true,
+          display = true,
+          low = 50,
+          low_color = addonTable.Colors.red,
+          medium_color = addonTable.Colors.orange,
+          high = 100,
+          high_color = addonTable.Colors.green,
+          icon_width = 32,
+          icon_height = 32,
+          position = nil,
+          width = 375,
+          height = 150,
+          hideInInstance = false,
+          hideInRestingZone = false,
+          hideDuringCombat = false,
         },
         OTHER_STUFF = {
-            name = addonTable.Locales.OTHER_STUFF,
-            enabled = true,
-            display = true,
-            low = 50,
-            low_color = addonTable.Colors.red,
-            medium_color = addonTable.Colors.orange,
-            high = 100,
-            high_color = addonTable.Colors.green,
-            icon_width = 32,
-            icon_height = 32
+          current_profession = addonTable.Constants.OTHER_STUFF,
+          enabled = true,
+          display = true,
+          low = 50,
+          low_color = addonTable.Colors.red,
+          medium_color = addonTable.Colors.orange,
+          high = 100,
+          high_color = addonTable.Colors.green,
+          icon_width = 32,
+          icon_height = 32,
+          position = nil,
+          width = 375,
+          height = 150,
+          hideInInstance = false,
+          hideInRestingZone = false,
+          hideDuringCombat = false,
         },
      }},
     -- Threshold management
@@ -77,18 +107,13 @@ local settings = {
     ICON_HEIGHT = {key="IconHeight", default = 32},
     ROW_AMOUNT = {key="RowAmount", default = 3},
     -- Global options
-    DISPLAY_IN_REPO_ZONE = {key = "DisplayInRepoZone", default = true},
-    SHOW_IN_COMBAT = {key = "ShowInCombat", default = true},
-    SHOW_IN_INSTANCES = { key = "ShowInInstances", default = false },
     SHOW_TOTAL = { key = "ShowTotal", default = true },
-    FONT = { key = "Font", default = "Friz Quadrata TT" },
+    FONT = { key = "Font", default = "Fonts\\FRIZQT__.TTF"},
+    FONT_SIZE = { key = "FontSize", default = 12 },
     BG_COLOR = { key = "BackgroundColor", default = {r = .2, b = .2, g = .2, a = 0.2} },
     BORDER = { key = "BorderColor", default = addonTable.Colors.black },
     HEADER_ICON_SIZE = { key = "headerIconSize", default = 22 },
     HEADER_FONT_SIZE = { key = "headerFontSize", default = 11 },
-    -- per window options
-    WINDOWS = { key = "windows", default = nil},
-    WINDOWS_COUNT = { key = "windowsCount", default = 1},
 }
 
 for key, details in pairs(settings) do
@@ -98,6 +123,16 @@ for key, details in pairs(settings) do
     else
       addonTable.Config.Defaults[details.key] = details.default
     end
+end
+
+
+function addonTable.Config.GetProfessionNameFromIndex(professionIndex)
+    for _, p in ipairs(addonTable.Profession) do
+        if p.id == professionIndex then
+            return p.name
+        end
+    end
+    addonTable.Utilities.Message("No name for profession index "..professionIndex)
 end
 
 --------------------------------------------------
@@ -126,7 +161,7 @@ end
 
 function addonTable.Config.InitializeData()
       if GATHEROVERVIEW_CONFIG == nil then
-        addonTable.Config.Reset()
+        addonTable.Config.ResetProfile()
         return
     end
 
@@ -135,7 +170,6 @@ function addonTable.Config.InitializeData()
             Profiles = {
             DEFAULT = GATHEROVERVIEW_CONFIG,
             },
-            CharacterSpecific = {},
             Version = addonTable.Constants.DB_VERSION,
         }
     end
@@ -227,7 +261,7 @@ local function IsValidOption(name)
 end
 
 local function RawSet(name, value)
-  local tree = {strsplit(".", name)}
+  local tree = {string.split(".", name)}
   if addonTable.Config.CurrentProfile == nil then
     error("GATHEROVERVIEW_CONFIG not initialized")
   elseif not IsValidOption(tree[1]) then
@@ -266,7 +300,7 @@ function addonTable.Config.Get(name)
   elseif name:find("%.") == nil then
     return addonTable.Config.CurrentProfile[name]
   else
-    local tree = {strsplit(".", name)}
+    local tree = {string.split(".", name)}
     local root = addonTable.Config.CurrentProfile
     for i = 1, #tree do
       root = root[tree[i]]

@@ -27,22 +27,6 @@ function panel:GetOptionInsetPanel()
     optionsInset:SetTitle(addonTable.Locales.OPTION_DISPLAY)
     optionsInset:SetFullWidth(true)
     do
-        self.showInInstance = AceGUI:Create("CheckBox")
-        self.showInInstance.message = {
-            name = addonTable.Locales.SHOW_IN_INSTANCES,
-            description = addonTable.Locales.SHOW_IN_INSTANCES_SUB
-        }
-        self.showInInstance:SetFullWidth(true)
-        self.showInInstance:SetLabel(addonTable.Locales.SHOW_IN_INSTANCES)
-        self.showInInstance:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES))
-        self.showInInstance:SetCallback("OnValueChanged", function(_, _, value)
-            addonTable.Config.Set(addonTable.Config.Options.SHOW_IN_INSTANCES, value)
-            addonTable.MainFrame.UpdateUI()
-        end)
-        self.showInInstance:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
-        self.showInInstance:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
-        optionsInset:AddChild(self.showInInstance)
-
         self.showTotal = AceGUI:Create("CheckBox")
         self.showTotal.message = {
             name = addonTable.Locales.SHOW_TOTAL,
@@ -58,38 +42,6 @@ function panel:GetOptionInsetPanel()
         self.showTotal:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
         self.showTotal:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
         optionsInset:AddChild(self.showTotal)
-
-        self.displayInRestZone = AceGUI:Create("CheckBox")
-        self.displayInRestZone.message = {
-            name = addonTable.Locales.DISPLAY_IN_REPO_ZONE,
-            description = addonTable.Locales.DISPLAY_IN_REPO_ZONE_SUB
-        }
-        self.displayInRestZone:SetFullWidth(true)
-        self.displayInRestZone:SetLabel(addonTable.Locales.DISPLAY_IN_REPO_ZONE)
-        self.displayInRestZone:SetValue(addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE))
-        self.displayInRestZone:SetCallback("OnValueChanged", function(_, _, value)
-            addonTable.Config.Set(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE, value)
-            addonTable.MainFrame.UpdateUI()
-        end)
-        self.displayInRestZone:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
-        self.displayInRestZone:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
-        optionsInset:AddChild(self.displayInRestZone)
-
-        self.showInCombat = AceGUI:Create("CheckBox")
-        self.showInCombat.message = {
-            name = addonTable.Locales.SHOW_IN_COMBAT,
-            description = addonTable.Locales.SHOW_IN_COMBAT_SUB
-        }
-        self.showInCombat:SetFullWidth(true)
-        self.showInCombat:SetLabel(addonTable.Locales.SHOW_IN_COMBAT)
-        self.showInCombat:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT))
-        self.showInCombat:SetCallback("OnValueChanged", function(_, _, value)
-            addonTable.Config.Set(addonTable.Config.Options.SHOW_IN_COMBAT, value)
-            addonTable.MainFrame.UpdateUI()
-        end)
-        self.showInCombat:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
-        self.showInCombat:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
-        optionsInset:AddChild(self.showInCombat)
     end
 
     return optionsInset
@@ -149,9 +101,66 @@ function panel:SetupGeneral()
 
         local profLabel = AceGUI:Create("Label")
         profLabel:SetColor(0.98, 0.82, 0, 1)
-        profLabel:SetText(prof.name)
+        profLabel:SetText(addonTable.Config.GetProfessionNameFromIndex(prof.current_profession))
         profLabel:SetFullWidth(true)
         profContainer:AddChild(profLabel)
+        
+        -- Show in instance
+        self.prof.showInInstance = AceGUI:Create("CheckBox")
+        self.prof.showInInstance.message = {
+            name = addonTable.Locales.SHOW_IN_INSTANCES,
+            description = addonTable.Locales.SHOW_IN_INSTANCES_SUB
+        }
+        self.prof.showInInstance:SetFullWidth(true)
+        self.prof.showInInstance:SetLabel(addonTable.Locales.SHOW_IN_INSTANCES)
+        self.prof.showInInstance:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES))
+        self.prof.showInInstance:SetCallback("OnValueChanged", function(_, _, value)
+            if not prof then prof = {} end
+            prof.hideInInstance = not value
+            addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+            addonTable.MainFrame.UpdateUI()
+        end)
+        self.prof.showInInstance:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.prof.showInInstance:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+        profContainer:AddChild(self.prof.showInInstance)
+
+        -- Show in rest zone
+        self.prof.displayInRestZone = AceGUI:Create("CheckBox")
+        self.prof.displayInRestZone.message = {
+            name = addonTable.Locales.DISPLAY_IN_REPO_ZONE,
+            description = addonTable.Locales.DISPLAY_IN_REPO_ZONE_SUB
+        }
+        self.prof.displayInRestZone:SetFullWidth(true)
+        self.prof.displayInRestZone:SetLabel(addonTable.Locales.DISPLAY_IN_REPO_ZONE)
+        self.prof.displayInRestZone:SetValue(addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE))
+        self.prof.displayInRestZone:SetCallback("OnValueChanged", function(_, _, value)
+            if not prof then prof = {} end
+            prof.hideInRestingZone = not value
+            addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+            addonTable.MainFrame.UpdateUI()
+        end)
+        self.prof.displayInRestZone:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.prof.displayInRestZone:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+        profContainer:AddChild(self.prof.displayInRestZone)
+
+        -- Show in combat
+        self.prof.showInCombat = AceGUI:Create("CheckBox")
+        self.prof.showInCombat.message = {
+            name = addonTable.Locales.SHOW_IN_COMBAT,
+            description = addonTable.Locales.SHOW_IN_COMBAT_SUB
+        }
+        self.prof.showInCombat:SetFullWidth(true)
+        self.prof.showInCombat:SetLabel(addonTable.Locales.SHOW_IN_COMBAT)
+        self.prof.showInCombat:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT))
+        self.prof.showInCombat:SetCallback("OnValueChanged", function(_, _, value)
+            if not prof then prof = {} end
+            prof.hideDuringCombat = not value
+            addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+            addonTable.MainFrame.UpdateUI()
+        end)
+        self.prof.showInCombat:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.prof.showInCombat:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+        optionsInset:AddChild(self.prof.showInCombat)
 
         if prof.name == addonTable.Locales.FISHING then
             self.displayFishing = AceGUI:Create("CheckBox")
@@ -172,6 +181,7 @@ function panel:SetupGeneral()
             self.displayFishing:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
             profContainer:AddChild(self.displayFishing)
         end
+
         local iconSizeGroup = AceGUI:Create("SimpleGroup")
         iconSizeGroup:SetFullWidth(true)
         iconSizeGroup:SetLayout("Flow")
@@ -255,10 +265,7 @@ function panel.refresh()
         end
 
         local professionsConfig = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
-        panel.showInInstance:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES))
         panel.showTotal:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_TOTAL))
-        panel.displayInRestZone:SetValue(addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE))
-        panel.showInCombat:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT))
         panel.iconPerRowSlider:SetValue(addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT))
         for _, prof in ipairs(professionsConfig) do
             if panel.prof.iconWidthSlider then
@@ -294,7 +301,7 @@ function panel.refresh()
                 end
                 panel.prof.highColorFrame:SetColor(high_color.r, high_color.g, high_color.b, high_color.a)
             end
-            if panel.prof.displayFishing and prof ~= nil and prof.name == addonTable.Locales.FISHING then
+            if panel.prof.displayFishing and prof ~= nil and prof.current_profession == addonTable.Constants.FISHING then
                 panel.prof.displayFishing:SetValue(prof.display or true)
             end
         end

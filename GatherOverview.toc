@@ -40,6 +40,7 @@ Core/SlashCmd.lua
 Core/Core.lua
 
 Components/Component.lua
+Components/Item.lua
 
 OptionDialog/Initialize.lua
 OptionDialog/GeneralPanel.lua
