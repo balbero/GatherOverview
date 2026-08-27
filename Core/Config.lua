@@ -11,6 +11,7 @@ local settings = {
         MINING = {
           current_profession = addonTable.Constants.MINING,
           enabled = true,
+          display = true,
           low = 50,
           low_color = addonTable.Colors.red,
           medium_color = addonTable.Colors.orange,
@@ -21,13 +22,15 @@ local settings = {
           position = nil,
           width = 375,
           height = 150,
-          hideInInstance = false,
-          hideInRestingZone = false,
-          hideDuringCombat = false,
+          showInInstance = false,
+          showInRestingZone = false,
+          showDuringCombat = false,
+          locked = false,
         },
         HERBALISM = {
           current_profession = addonTable.Constants.HERBALISM,
           enabled = true,
+          display = true,
           low = 50,
           low_color = addonTable.Colors.red,
           medium_color = addonTable.Colors.orange,
@@ -38,13 +41,15 @@ local settings = {
           position = nil,
           width = 375,
           height = 150,
-          hideInInstance = false,
-          hideInRestingZone = false,
-          hideDuringCombat = false,
+          showInInstance = false,
+          showInRestingZone = false,
+          showDuringCombat = false,
+          locked = false,
         },
         SKINNING = {
           current_profession = addonTable.Constants.SKINNING,
           enabled = true,
+          display = true,
           low = 50,
           low_color = addonTable.Colors.red,
           medium_color = addonTable.Colors.orange,
@@ -55,9 +60,10 @@ local settings = {
           position = nil,
           width = 375,
           height = 150,
-          hideInInstance = false,
-          hideInRestingZone = false,
-          hideDuringCombat = false,
+          showInInstance = false,
+          showInRestingZone = false,
+          showDuringCombat = false,
+          locked = false,
         },
         FISHING = {
           current_profession = addonTable.Constants.FISHING,
@@ -73,9 +79,10 @@ local settings = {
           position = nil,
           width = 375,
           height = 150,
-          hideInInstance = false,
-          hideInRestingZone = false,
-          hideDuringCombat = false,
+          showInInstance = false,
+          showInRestingZone = false,
+          showDuringCombat = false,
+          locked = false,
         },
         OTHER_STUFF = {
           current_profession = addonTable.Constants.OTHER_STUFF,
@@ -91,9 +98,10 @@ local settings = {
           position = nil,
           width = 375,
           height = 150,
-          hideInInstance = false,
-          hideInRestingZone = false,
-          hideDuringCombat = false,
+          showInInstance = false,
+          showInRestingZone = false,
+          showDuringCombat = false,
+          locked = false,
         },
      }},
     -- Threshold management
@@ -108,7 +116,7 @@ local settings = {
     ROW_AMOUNT = {key="RowAmount", default = 3},
     -- Global options
     SHOW_TOTAL = { key = "ShowTotal", default = true },
-    FONT = { key = "Font", default = "Fonts\\FRIZQT__.TTF"},
+    FONT = { key = "Font", default = {name = "Friz Quadrata", path ="Fonts\\FRIZQT__.TTF"}},
     FONT_SIZE = { key = "FontSize", default = 12 },
     BG_COLOR = { key = "BackgroundColor", default = {r = .2, b = .2, g = .2, a = 0.2} },
     BORDER = { key = "BorderColor", default = addonTable.Colors.black },
@@ -314,6 +322,11 @@ end
 
 function addonTable.Config.Set(name, value)
   if RawSet(name, value) then
-    addonTable.Utilities.Message("Setting changed: " .. name .. " -> " .. tostring(value))
+
+    if type(value) ~= "table" then
+      addonTable.Utilities.Message("Setting changed: " .. name .. " -> " .. tostring(value))
+    else
+      addonTable.Utilities.Message("Setting changed: " .. name)
+    end
   end
 end

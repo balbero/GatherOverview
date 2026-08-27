@@ -12,33 +12,11 @@ GetItemReagentQualityInfo = C_TradeSkillUI and C_TradeSkillUI.GetItemReagentQual
 local MIN_W, MIN_H = 150, 50
 local MAX_WINDOWS = 5 -- on for each profession and a last for the gathered reagent
 local IMAGES = "Interface\\AddOns\\GatherOverview\\Assets\\Images\\"
-local FONTS = "Interface\\AddOns\\GatherOverview\\Assets\\Fonts\\"
 local _windows = {}
 addonTable._windows = _windows
 
 local headerHeight = 20
 local iconSpacingX = 10
-
-local function GetMissingCurrencyFromQuest(item)
-    local ret = tLength(item.questId)
-    for _,id in ipairs(item.questId) do
-        if C_QuestLog.IsQuestFlaggedCompleted(id) then
-            ret = ret - 1
-        end
-    end
-    return ret
-end
-
-local function GetCatchUpCurrencyLeft(id)
-  local info = C_CurrencyInfo.GetCurrencyInfo(id)
-  return {
-        quantity = info.quantity,
-        max = info.maxQuantity,
-        weeklyEarned = info.quantityEarnedThisWeek,
-        maxWeeklyEarned = info.maxWeeklyQuantity,
-        totalEarned = info.totalEarned,
-    }
-end
 
 local function GetSortedProfessions()
     local professionSetting = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
@@ -84,57 +62,12 @@ local function GetSortedProfessions()
     return enabledCategories
 end
 
-local function CreateIcon(parent, itemId)
-    local button = CreateFrame("Frame", nil, parent)
-    -- button:SetSize(iconW, iconH)
-
-    local icon = button:CreateTexture(nil, "ARTWORK")
-    icon:SetAllPoints()
-    icon:SetTexture(C_Item.GetItemIconByID(itemId))
-    local info = GetItemReagentQualityInfo(itemId)
-
-    if info and info.icon then
-        local qualityText = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        qualityText:SetPoint("TOPLEFT", button, "TOPLEFT", -7, 7)
-        local text = "|A:"..info.icon..":20:20|a"
-        qualityText:SetText(text)
-    end
-
-    local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    text:SetPoint("TOP", button, "BOTTOM", 0, -5)
-
-    button.icon = icon
-    button.text = text
-
-    return button
-end
-
-local function UpdateToolTip(button, itemId, message)
-    button:SetScript("OnEnter", function(self)
-        if message then
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:AddLine(C_Item.GetItemInfo(itemId), 1, .82, 0, true)
-            GameTooltip:AddLine(message, 1, 1, 1, true)
-            GameTooltip:Show()
-        end
-    end)
-    button:SetScript("OnLeave", function(self)
-        if message then
-            GameTooltip:Hide()
-        end
-    end)
-end 
-
-local function GetCountValue(displayCount)
-    local ret = displayCount
-    if displayCount > 999 then
-        ret = math.floor(displayCount / 1000) .. "K+"
-    end
-    return ret
-end
-
 local function GetFont()
-    return FONTS.."Expressway.TTF"
+    return addonTable.Config.Get(addonTable.Config.Options.FONT)
+end
+
+local function GetFontSize()
+    return addonTable.Config.Get(addonTable.Config.Options.FONT_SIZE)
 end
 
 
@@ -170,7 +103,6 @@ end
 
 local _contextMenu, _contextMenuSub
 local _contextMenuAnchor = nil  -- tracks which button opened the menu (for toggle)
-local CTX_ARROW_ICON = "Interface\\AddOns\\GatherOverview\\Assets\\arrow.png"
 
 local function MakeMenuPanel(level)
     local f = CreateFrame("Frame", nil, UIParent)
@@ -191,21 +123,14 @@ end
 local function EnsureMenuRow(menu, idx)
     local row = menu._pool[idx]
     if row then return row end
-    local fontPath = GetFont()
+    local fontPath = GetFont().path
     row = CreateFrame("Button", nil, menu)
     row._hl = row:CreateTexture(nil, "BACKGROUND", nil, 1)
     row._hl:SetAllPoints()
     row._lbl = row:CreateFontString(nil, "OVERLAY")
-    row._lbl:SetFont(fontPath, 11, "")
+    row._lbl:SetFont(fontPath, GetFontSize(), "")
     row._lbl:SetPoint("LEFT", row, "LEFT", 8, 0)
     row._lbl:SetJustifyH("LEFT")
-    row._arrow = row:CreateTexture(nil, "ARTWORK")
-    row._arrow:SetTexture(CTX_ARROW_ICON)
-    row._arrow:SetSize(19, 19)
-    row._arrow:SetPoint("RIGHT", row, "RIGHT", -2, 0)
-    row._arrow:SetRotation(math.pi / 2)
-    row._arrow:SetVertexColor(1, 1, 1, 0.75)
-    row._arrow:Hide()
     row._sep = row:CreateTexture(nil, "ARTWORK")
     row._sep:SetHeight(1)
     row._sep:SetPoint("LEFT", row, "LEFT", 6, 0)
@@ -218,15 +143,15 @@ local function EnsureMenuRow(menu, idx)
 end
 
 local function LayoutMenu(menu, items, onDismiss, isChild)
-    local fontPath = GetFont()
-    local hlAlpha = 0.08
+    local fontPath = GetFont().path
+    local hlAlpha = 0.2
     for _, r in ipairs(menu._pool) do
         r:Hide()
     end
     if not menu._mfs then
         menu._mfs = menu:CreateFontString(nil, "OVERLAY")
     end
-    menu._mfs:SetFont(fontPath, 11, "")
+    menu._mfs:SetFont(fontPath, GetFontSize(), "")
     local maxW = 0
     for _, item in ipairs(items) do
         if type(item) == "table" and item.text then
@@ -244,7 +169,6 @@ local function LayoutMenu(menu, items, onDismiss, isChild)
     for idx, item in ipairs(items) do
         local row = EnsureMenuRow(menu, idx)
         row._sep:Hide()
-        row._arrow:Hide()
         row._hl:SetColorTexture(1, 1, 1, 0)
         if item == "---" then
             row:SetSize(menuW, 7)
@@ -315,10 +239,6 @@ local function LayoutMenu(menu, items, onDismiss, isChild)
             if item.isInput then -- skip normal item logic
             else
             local disabled = item.isDisabled and item.isDisabled()
-            if item.children then
-                row._arrow:SetVertexColor(1, 1, 1, disabled and 0.2 or 0.75)
-                row._arrow:Show()
-            end
             if disabled then
                 row._lbl:SetTextColor(0.4, 0.4, 0.4, 0.5)
                 row:SetScript("OnEnter", function()
@@ -338,30 +258,8 @@ local function LayoutMenu(menu, items, onDismiss, isChild)
                 local itemRef = item
                 row:SetScript("OnEnter", function(self)
                     self._hl:SetColorTexture(1, 1, 1, hlAlpha)
-                    -- if itemRef.tooltip and EUI.ShowWidgetTooltip then
-                    --     EUI.ShowWidgetTooltip(self, itemRef.tooltip)
-                    -- end
-                    if itemRef.children then
-                        if not _contextMenuSub then
-                            _contextMenuSub = MakeMenuPanel(1)
-                        end
-                        LayoutMenu(_contextMenuSub, itemRef.children, onDismiss, true)
-                        _contextMenuSub:ClearAllPoints()
-                        local right = self:GetRight()
-                        local subW = _contextMenuSub:GetWidth()
-                        local screenW = UIParent:GetRight()
-                        if right and subW and screenW and (right + subW) > screenW then
-                            _contextMenuSub:SetPoint("TOPRIGHT", self, "TOPLEFT", 0, 0)
-                        else _contextMenuSub:SetPoint("TOPLEFT", self, "TOPRIGHT", 0, 0) end
-                        _contextMenuSub:Show()
-                    elseif not isChild and _contextMenuSub then
-                        _contextMenuSub:Hide()
-                    end
                 end)
                 row:SetScript("OnLeave", function(self)
-                    -- if EUI.HideWidgetTooltip then
-                    --     EUI.HideWidgetTooltip()
-                    -- end
                     self._hl:SetColorTexture(1, 1, 1, active and hlAlpha or 0)
                     self._lbl:SetTextColor(1, 1, 1, 1)
                     if isChild then return end
@@ -383,7 +281,8 @@ local function LayoutMenu(menu, items, onDismiss, isChild)
             if row._editBox then
                 row._editBox:Hide()
             end
-            row:Show(); y = y - rowH
+            row:Show()
+            y = y - rowH
             end -- close isInput else
         end
     end
@@ -513,7 +412,7 @@ local function CreateProfessionFrame(idx, category)
     local professionTranslation = addonTable.ProfessionTranslate[category]
     window.titleText = header:CreateFontString(nil, "OVERLAY")
     local fontSize = addonTable.Config.Get(addonTable.Config.Options.HEADER_FONT_SIZE) or 11
-    window.titleText:SetFont(GetFont(), fontSize, "OUTLINE")
+    window.titleText:SetFont(GetFont().path, fontSize, "OUTLINE")
     window.titleText:SetPoint("LEFT", header, "LEFT", 6)
     window._fullTitle = professionTranslation
     window.titleText:SetText(professionTranslation)
@@ -541,35 +440,37 @@ local function CreateProfessionFrame(idx, category)
         window.headerIcons[#window.headerIcons + 1] = icon
         btn:SetScript("OnEnter", function(self)
             icon:SetVertexColor(1, 1, 1, .9)
-            -- show tooltip
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(tooltip, 1, 1, 1, true)
+            GameTooltip:Show()
         end)
         btn:SetScript("OnLeave", function()
             icon:SetVertexColor(1, 1, 1, .4)
-            -- hide tooltip
+            GameTooltip:Hide()
         end)
         btn:SetScript("OnClick", function(self)
-            -- hide tooltip before exec to onClick
+            GameTooltip:Hide()
             onClick(self)
         end)
         return btn
     end
 
-    window.settingsBtn = MakeHeaderBtn("cog.png", 0, "Settings", function()
+    window.settingsBtn = MakeHeaderBtn("cog.png", 0, L.OPTION_DISPLAY, function()
         ShowContextMenu({
-            { text = L.SHOW_IN_INSTANCES, isActive = not wCfg.hideInInstance, onClick = function()
-                wCfg.hideInInstance = not wCfg.hideInInstance
+            { text = L.SHOW_IN_INSTANCES, isActive = wCfg.showInInstance, onClick = function()
+                wCfg.showInInstance = not wCfg.showInInstance
                 for _, w in ipairs(_windows) do
                     w.UpdateVisibility()
                 end
             end },
-            { text = L.SHOW_IN_COMBAT, isActive = not wCfg.hideDuringCombat, onClick = function()
-                wCfg.hideDuringCombat = not wCfg.hideDuringCombat
+            { text = L.SHOW_IN_COMBAT, isActive = wCfg.showDuringCombat, onClick = function()
+                wCfg.showDuringCombat = not wCfg.showDuringCombat
                 for _, w in ipairs(_windows) do
                     w.UpdateVisibility()
                 end
             end },
-            { text = L.DISPLAY_IN_REPO_ZONE, isActive = not wCfg.hideInRestingZone, onClick = function()
-                wCfg.hideInRestingZone = not wCfg.hideInRestingZone
+            { text = L.DISPLAY_IN_REPO_ZONE, isActive = wCfg.showInRestingZone, onClick = function()
+                wCfg.showInRestingZone = not wCfg.showInRestingZone
                 for _, w in ipairs(_windows) do
                     w.UpdateVisibility()
                 end
@@ -637,6 +538,9 @@ local function CreateProfessionFrame(idx, category)
             local enabledCategories = GetSortedProfessions()
             for i, cat in ipairs(enabledCategories) do
                 if not _windows[cat] then
+                    local conf = GetWindowConfig(cat)
+                    conf.display = true
+                    SaveWindowConfig(cat, conf)
                     _windows[cat] = CreateProfessionFrame(i, cat)
                     _windows[cat].width = math.floor(srcW2 + 0.5)
                     _windows[cat].height = math.floor(srcH2 + 0.5)
@@ -665,14 +569,12 @@ local function CreateProfessionFrame(idx, category)
             window.actionBtn:HookScript("OnEnter", function(self)
                 if tLength(_windows) >= MAX_WINDOWS then
                     iconTex:SetAlpha(0.2)
-                    -- TOOLTIP
                 end
             end)
         else
             window.actionBtn:HookScript("OnEnter", function(self)
                 if window.windowLocked then
                     iconTex:SetVertexColor(1, 1, 1, .9)
-                    -- TOOLTIP
                 end
             end)
             window.actionBtn:HookScript("OnLeave", function()
@@ -714,7 +616,7 @@ local function CreateProfessionFrame(idx, category)
 
     header:SetScript("OnMouseDown", function(_, button)
         if button ~= "LeftButton" or window.windowLocked then return end
-        if not window.hideInInstance and IsInInstance() then return end
+        if not window.showInInstance and IsInInstance() then return end
         local cx, cy = GetCursorPosition()
         local es = frame:GetEffectiveScale()
         dragStartCX = cx/es
@@ -747,19 +649,22 @@ local function CreateProfessionFrame(idx, category)
     window.subHeaderText = {}
 
     -- Helper: Update icon display (text, color, position, tooltip)
-    local function UpdateIconDisplay(itemID, displayValue, message, iconWidth, iconHeight, colIcon, rowIconY)
-        if not window.icons[itemID] then
-            window.icons[itemID] = CreateIcon(window.frame, itemID)
+    ---@param item Item item à afficher
+    local function UpdateIconDisplay(item, displayValue, iconWidth, iconHeight, colIcon, rowIconY)
+        if not window.icons[item.id] then
+            window.icons[item.id] = item:createWidget(window.frame)
+            item:updateToolTip(window.icons[item.id])
         end
-        window.icons[itemID]:SetSize(iconWidth, iconHeight)
+
+        window.icons[item.id]:SetSize(iconWidth, iconHeight)
         local iconX = 10 + colIcon * (iconWidth + iconSpacingX)
-        window.icons[itemID]:SetPoint("TOPLEFT", window.frame, "TOPLEFT", iconX, rowIconY)
-        window.icons[itemID].text:SetText(tostring(GetCountValue(displayValue)))
+        window.icons[item.id]:SetPoint("TOPLEFT", window.frame, "TOPLEFT", iconX, rowIconY)
         
+        item:updateWidget(window.icons[item.id])
+
         local color = addonTable.Colors.GetColorForValue(professionTranslation, displayValue)
-        window.icons[itemID].text:SetTextColor(color.r, color.g, color.b, color.a)
-        window.icons[itemID]:Show()
-        UpdateToolTip(window.icons[itemID], itemID, message)
+        window.icons[item.id].countText:SetTextColor(color.r, color.g, color.b, color.a)
+        window.icons[item.id]:Show()
     end
 
     -- Helper: Advance layout position
@@ -775,8 +680,10 @@ local function CreateProfessionFrame(idx, category)
 
     function window.Refresh()
         if not frame then return end
-        local iconWidth = professionSetting[category].icon_width
-        local iconHeight = professionSetting[category].icon_height
+        window.titleText:SetFont(GetFont().path, fontSize, "OUTLINE")
+
+        local iconWidth = professionSetting[window.category].icon_width
+        local iconHeight = professionSetting[window.category].icon_height
         local state = { colIcon = 0, rowIconY = -35, rowCount = 0, fullRow = false }
         
         items = addonTable.MainFrame.Counts[window.category]
@@ -802,24 +709,14 @@ local function CreateProfessionFrame(idx, category)
                     local total = info[3]
                     local displayCount = showTotal and total or bagCount
                     if item.profession == addonTable.Constants.OTHER_STUFF then
-                        local message = L.IN_BAGS .. ": " .. bagCount .. "\n" .. L.IN_BANK .. ": " .. (total - bagCount) .. "\n" .. L.TOTAL .. ": " .. total
-                        UpdateIconDisplay(item.id, displayCount, message, iconWidth, iconHeight, state.colIcon, state.rowIconY)
+                        UpdateIconDisplay(item, displayCount, iconWidth, iconHeight, state.colIcon, state.rowIconY)
                         AdvanceLayoutPos(state, iconHeight)
                     else
-                        local totalToCatch = 1
-                        if item.curencyId then
-                            local quantity = GetCatchUpCurrencyLeft(item.curencyId)
-                            totalToCatch = quantity.max - quantity.quantity
-                        end
-                        if item.questId then
-                            totalToCatch = GetMissingCurrencyFromQuest(item)
-                        end
-                        
+                        local totalToCatch = item:getTotalToCatch()                        
                         if totalToCatch == 0 and window.icons[item.id] then
                             window.icons[item.id]:Hide()
                         else
-                            local message = L.STILL_TO_GET .. ": " .. totalToCatch
-                            UpdateIconDisplay(item.id, totalToCatch, message, iconWidth, iconHeight, state.colIcon, state.rowIconY)
+                            UpdateIconDisplay(item, totalToCatch, iconWidth, iconHeight, state.colIcon, state.rowIconY)
                             AdvanceLayoutPos(state, iconHeight)
                         end
                     end
@@ -827,13 +724,12 @@ local function CreateProfessionFrame(idx, category)
             end
         else
             for _, info in ipairs(items) do
-                local itemID = info[1]
+                local item = info[4] -- get the full item data
                 local count = info[2]
                 local total = info[3]
                 local displayCount = showTotal and total or count
-                local message = L.IN_BAGS .. ": " .. count .. "\n" .. L.IN_BANK .. ": " .. (total - count) .. "\n" .. L.TOTAL .. ": " .. total
                 
-                UpdateIconDisplay(itemID, displayCount, message, iconWidth, iconHeight, state.colIcon, state.rowIconY)
+                UpdateIconDisplay(item, displayCount, iconWidth, iconHeight, state.colIcon, state.rowIconY)
                 AdvanceLayoutPos(state, iconHeight)
             end
         end
@@ -852,9 +748,10 @@ local function CreateProfessionFrame(idx, category)
         -- save configuration 
         SaveWindowConfig(category, wCfg)
         -- Per-window instance visibility
-        if (wCfg.hideInInstance and IsInInstance()) or
-           (wCfg.hideInRestingZone and IsResting()) or
-           (wCfg.hideDuringCombat and PlayerIsInCombat()) then
+        if (not wCfg.showInInstance and IsInInstance()) or
+           (not wCfg.showInRestingZone and IsResting()) or
+           (not wCfg.showDuringCombat and PlayerIsInCombat()) or
+            (not wCfg.display and wCfg.enabled) then
             frame:Hide()
             return
         end
@@ -873,6 +770,9 @@ local function CreateProfessionFrame(idx, category)
     function window.Destroy()
         frame:Hide()
         frame:SetParent(nil)
+        wCfg.display = false
+        SaveWindowConfig(category, wCfg)
+
         -- Remove from runtime array
         local runtimeCategory
         for _, w in pairs(_windows) do
@@ -904,11 +804,6 @@ function addonTable.MainFrame.Initialize()
     addonTable.MainFrame.ScanBags()
 
     local enabledCategories = GetSortedProfessions()
-    MAX_WINDOWS = tLength(enabledCategories) + 1 -- +1 for Misc elements
-
-    for i = 1, MAX_WINDOWS do
-        _windows[i] = nil
-    end
 
     for i, category in ipairs(enabledCategories) do
         _windows[category] = CreateProfessionFrame(i, category)
@@ -933,17 +828,31 @@ function addonTable.MainFrame.ScanBags()
     if not addonTable.Constants.IsRetail then return end
 
     local isMidnight = addonTable.Constants.IsMidnight
-    for category, itemList in pairs(addonTable.ItemDB) do
+    -- Utiliser les instances Item au lieu de ItemDB brut    
+    for category, itemInstanceList in pairs(addonTable.Items) do
         addonTable.MainFrame.Counts[category] = {}
-        for _, itemData in ipairs(itemList) do
-            local itemId = itemData.id
-            local ext = itemData.extension
+
+        local addedCount = 0
+        for idx, item in ipairs(itemInstanceList) do
+            local ext = item.extension
             -- If Midnight build: only include items with extension MN
             -- Otherwise include items that are not MN
             if (isMidnight and ext == addonTable.Constants.EXT_MN) or (not isMidnight and ext ~= addonTable.Constants.EXT_MN) then
-                local count = C_Item.GetItemCount(itemId)
-                local total = C_Item.GetItemCount(itemId, true, nil, true, true)
-                table.insert(addonTable.MainFrame.Counts[category], {itemId, count, total, itemData})
+                local count = C_Item.GetItemCount(item.id)
+                local total = C_Item.GetItemCount(item.id, true, nil, true, true)
+
+                -- Mettre à jour les counts dans l'instance Item
+                item.count = count
+                item.total = total
+
+                -- Stocker les infos pour l'affichage
+                table.insert(addonTable.MainFrame.Counts[category], {
+                    item.id, 
+                    count, 
+                    total, 
+                    item  -- Passer l'instance Item
+                })
+                addedCount = addedCount + 1
             end
         end
     end

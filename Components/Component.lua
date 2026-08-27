@@ -2,8 +2,6 @@
 local addonTable = select(2, ...)
 local InCombatLockdown = InCombatLockdown
 
-addonTable.Components = {}
-
 
 local tooltip = tooltip or CreateFrame("GameTooltip", "GatherOverviewTooltip", UIParent, "GameTooltipTemplate")
 

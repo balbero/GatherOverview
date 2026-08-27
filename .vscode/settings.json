@@ -133,7 +133,23 @@
         "GossipFrame",
         "QuestFrame",
         "DEFAULT",
-        "FONT_SIZE"
+        "FONT_SIZE",
+        "MapCanvasDataProviderMixin",
+        "MapCanvasPinMixin",
+        "UIDropDownMenu_SetWidth",
+        "UIDropDownMenu_EnableDropDown",
+        "MASTER_VOLUME",
+        "MUSIC_VOLUME",
+        "AMBIENCE_VOLUME",
+        "DIALOG_VOLUME",
+        "PVEFrame",
+        "LFGListSearchPanel_DoSearch",
+        "PVPQueueFrame_ShowFrame",
+        "LFGListSearchPanel_UpdateResults",
+        "PVPUtil",
+        "InputScrollFrame_OnLoad",
+        "InputScrollFrame_OnTextChanged",
+        "InputScrollFrame_OnEscapePressed"
     ],
     "Lua.type.weakUnionCheck": true
 }

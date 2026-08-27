@@ -1,6 +1,6 @@
 ## Interface: 120100, 120007, 120005, 120001, 120000
 ## Title: GatherOverview
-## Version: 1.0.7
+## Version: 2.0.0
 ## Author: Faelgorn
 ## Notes: Provides an overview of gathered resources.
 ## Notes-frFR: Fournit une vue d'ensemble des ressources récoltées.
@@ -30,17 +30,17 @@ Locales.lua
 Core/Constants.lua
 Core/Objects.lua
 Core/Locales.lua
-Core/ItemDB.lua
 
 Utils/Colors.lua
 Utils/Utilities.lua
 
 Core/Config.lua
+Components/Item.lua
+Core/ItemDB.lua
 Core/SlashCmd.lua
 Core/Core.lua
 
 Components/Component.lua
-Components/Item.lua
 
 OptionDialog/Initialize.lua
 OptionDialog/GeneralPanel.lua
