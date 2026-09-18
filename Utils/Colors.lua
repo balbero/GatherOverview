@@ -7,11 +7,15 @@ addonTable.Colors = {
     white = { r = 1, g = 1, b = 1, a = 1 },
 }
 
+---Récupère la couleur en fonction de la profession et de la valeur à afficher
+---@param profession number Le numero de la profession (see constants)
+---@param value number Valeure à afficher
+---@return table
 function addonTable.Colors.GetColorForValue(profession, value)
     local professionSettings = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     local prof = nil
     for _, p in pairs(professionSettings) do
-        if p.name == profession then
+        if p.current_profession == profession then
             prof = p
             break
         end

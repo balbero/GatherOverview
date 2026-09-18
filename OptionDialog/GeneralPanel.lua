@@ -1,10 +1,12 @@
 ---@class addonTableGatherOverview
 local addonTable = select(2, ...)
 
+local L = addonTable.Locales
+
 local AceGUI = LibStub("AceGUI-3.0")
 
 local panel = AceGUI:Create("BlizOptionsGroup")
-panel:SetTitle(addonTable.Locales.GENERAL)
+panel:SetTitle(L.GENERAL)
 
 panel:SetCallback("okay", function()
     addonTable.MainFrame.UpdateUI()
@@ -20,36 +22,35 @@ panel:SetCallback("OnShow", function()
     end
 end)
 
+local FONTS             = "Interface\\AddOns\\GatherOverview\\Assets\\Fonts\\"
+
+local FONT_LIST = {
+    { name = "Friz Quadrata", path = "Fonts\\FRIZQT__.TTF" },
+    { name = "Morpheus",      path = "Fonts\\MORPHEUS.ttf" },
+    { name = "Skurri",        path = "Fonts\\SKURRI.ttf" },
+    { name = "Arial",         path = "Fonts\\ARIALN.ttf" },
+    { name = "ExpressWay",    path = FONTS.."ExpressWay.TTF"}
+}
+
+local FONT_SIZES = {}
+for i = 6, 15 do
+    FONT_SIZES[i] = i
+end
+
 addonTable.OptionDialog.GENERAL = panel
 
 function panel:GetOptionInsetPanel()
     local optionsInset = AceGUI:Create("InlineGroup")
-    optionsInset:SetTitle(addonTable.Locales.OPTION_DISPLAY)
+    optionsInset:SetTitle(L.OPTION_DISPLAY)
     optionsInset:SetFullWidth(true)
     do
-        self.showInInstance = AceGUI:Create("CheckBox")
-        self.showInInstance.message = {
-            name = addonTable.Locales.SHOW_IN_INSTANCES,
-            description = addonTable.Locales.SHOW_IN_INSTANCES_SUB
-        }
-        self.showInInstance:SetFullWidth(true)
-        self.showInInstance:SetLabel(addonTable.Locales.SHOW_IN_INSTANCES)
-        self.showInInstance:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES))
-        self.showInInstance:SetCallback("OnValueChanged", function(_, _, value)
-            addonTable.Config.Set(addonTable.Config.Options.SHOW_IN_INSTANCES, value)
-            addonTable.MainFrame.ToggleIfNeeded()
-        end)
-        self.showInInstance:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
-        self.showInInstance:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
-        optionsInset:AddChild(self.showInInstance)
-
         self.showTotal = AceGUI:Create("CheckBox")
         self.showTotal.message = {
-            name = addonTable.Locales.SHOW_TOTAL,
-            description = addonTable.Locales.SHOW_TOTAL_SUB
+            name = L.SHOW_TOTAL,
+            description = L.SHOW_TOTAL_SUB
         }
         self.showTotal:SetFullWidth(true)
-        self.showTotal:SetLabel(addonTable.Locales.SHOW_TOTAL)
+        self.showTotal:SetLabel(L.SHOW_TOTAL)
         self.showTotal:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_TOTAL))
         self.showTotal:SetCallback("OnValueChanged", function(_, _, value)
             addonTable.Config.Set(addonTable.Config.Options.SHOW_TOTAL, value)
@@ -59,37 +60,46 @@ function panel:GetOptionInsetPanel()
         self.showTotal:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
         optionsInset:AddChild(self.showTotal)
 
-        self.displayInRestZone = AceGUI:Create("CheckBox")
-        self.displayInRestZone.message = {
-            name = addonTable.Locales.DISPLAY_IN_REPO_ZONE,
-            description = addonTable.Locales.DISPLAY_IN_REPO_ZONE_SUB
-        }
-        self.displayInRestZone:SetFullWidth(true)
-        self.displayInRestZone:SetLabel(addonTable.Locales.DISPLAY_IN_REPO_ZONE)
-        self.displayInRestZone:SetValue(addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE))
-        self.displayInRestZone:SetCallback("OnValueChanged", function(_, _, value)
-            addonTable.Config.Set(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE, value)
-            addonTable.MainFrame.ToggleIfNeeded()
-        end)
-        self.displayInRestZone:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
-        self.displayInRestZone:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
-        optionsInset:AddChild(self.displayInRestZone)
+        local fontGroup = AceGUI:Create("SimpleGroup")
+        fontGroup:SetFullWidth(true)
+        fontGroup:SetLayout("Flow")
 
-        self.showInCombat = AceGUI:Create("CheckBox")
-        self.showInCombat.message = {
-            name = addonTable.Locales.SHOW_IN_COMBAT,
-            description = addonTable.Locales.SHOW_IN_COMBAT_SUB
-        }
-        self.showInCombat:SetFullWidth(true)
-        self.showInCombat:SetLabel(addonTable.Locales.SHOW_IN_COMBAT)
-        self.showInCombat:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT))
-        self.showInCombat:SetCallback("OnValueChanged", function(_, _, value)
-            addonTable.Config.Set(addonTable.Config.Options.SHOW_IN_COMBAT, value)
-            addonTable.MainFrame.ToggleIfNeeded()
+        self.fontNameDropDown = AceGUI:Create("Dropdown")
+        self.fontNameDropDown:SetLabel(L.SELECT_FONT)
+        self.fontNameDropDown:SetWidth(200)
+        self.fontNameDropDown:SetMultiselect(false)
+        local fontNames = {}
+        for _, f in ipairs(FONT_LIST) do
+            fontNames[f.name] = f.name
+        end
+        self.fontNameDropDown:SetList(fontNames)
+        self.fontNameDropDown:SetValue(addonTable.Config.Get(addonTable.Config.Options.FONT).name)
+
+        self.fontNameDropDown:SetCallback("OnValueChanged", function(_, _, key)
+            for _, f in ipairs(FONT_LIST) do
+                if f.name == key then
+                    addonTable.Config.Set(addonTable.Config.Options.FONT, f)
+                    addonTable.MainFrame.UpdateUI()
+                    break
+                end
+            end
         end)
-        self.showInCombat:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
-        self.showInCombat:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
-        optionsInset:AddChild(self.showInCombat)
+        fontGroup:AddChild(self.fontNameDropDown)
+
+        self.fontSizeDropDown = AceGUI:Create("Dropdown")
+        self.fontSizeDropDown:SetLabel(L.SELECT_FONT_SIZE)
+        self.fontSizeDropDown:SetWidth(200)
+        self.fontSizeDropDown:SetMultiselect(false)
+        self.fontSizeDropDown:SetList(FONT_SIZES)
+        self.fontSizeDropDown:SetValue(addonTable.Config.Get(addonTable.Config.Options.FONT_SIZE))
+
+        self.fontSizeDropDown:SetCallback("OnValueChanged", function(_, _, key)
+            addonTable.Config.Set(addonTable.Config.Options.FONT_SIZE, key)
+            addonTable.MainFrame.UpdateUI()
+        end)
+        fontGroup:AddChild(self.fontSizeDropDown)
+
+        optionsInset:AddChild(fontGroup)
     end
 
     return optionsInset
@@ -113,7 +123,7 @@ function panel:SetupGeneral()
 
     local professionsConfig = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
     local professionsInset = AceGUI:Create("InlineGroup")
-    professionsInset:SetTitle(addonTable.Locales.PROFESSIONS)
+    professionsInset:SetTitle(L.PROFESSIONS)
     professionsInset:SetFullWidth(true)
 
     local iconPerRowGroup = AceGUI:Create("SimpleGroup")
@@ -122,7 +132,7 @@ function panel:SetupGeneral()
     self.iconPerRowSlider = AceGUI:Create("Slider")
     self.iconPerRowSlider:SetWidth(150)
     self.iconPerRowSlider:SetSliderValues(2, 12, 1)
-    self.iconPerRowSlider:SetLabel(addonTable.Locales.ROW_AMOUNT)
+    self.iconPerRowSlider:SetLabel(L.ROW_AMOUNT)
     self.iconPerRowSlider:SetValue(addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT))
     self.iconPerRowSlider:SetCallback("OnMouseUp", function(_,_, value)
         addonTable.Config.Set(addonTable.Config.Options.ROW_AMOUNT, value)
@@ -141,7 +151,7 @@ function panel:SetupGeneral()
     
     professionsInset:AddChild(addonTable.Components.GetVSpace(5))
 
-    for _, prof in pairs(professionsConfig) do
+    for _, p in pairs(professionsConfig) do
 	    self.prof = {}
         local profContainer = AceGUI:Create("SimpleGroup")
         profContainer:SetFullWidth(true)
@@ -149,43 +159,81 @@ function panel:SetupGeneral()
 
         local profLabel = AceGUI:Create("Label")
         profLabel:SetColor(0.98, 0.82, 0, 1)
-        profLabel:SetText(prof.name)
+        profLabel:SetText(addonTable.Config.GetProfessionNameFromIndex(p.current_profession))
         profLabel:SetFullWidth(true)
         profContainer:AddChild(profLabel)
+        
+        -- Show in instance
+        self.prof.showInInstance = AceGUI:Create("CheckBox")
+        self.prof.showInInstance.message = {
+            name = L.SHOW_IN_INSTANCES,
+            description = L.SHOW_IN_INSTANCES_SUB
+        }
+        self.prof.showInInstance:SetFullWidth(true)
+        self.prof.showInInstance:SetLabel(L.SHOW_IN_INSTANCES)
+        self.prof.showInInstance:SetValue(p.showInInstance)
+        self.prof.showInInstance:SetCallback("OnValueChanged", function(_, _, value)
+            if not p then p = {} end
+            p.showInInstance = value
+            addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+            addonTable.MainFrame.UpdateUI()
+        end)
+        self.prof.showInInstance:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.prof.showInInstance:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+        profContainer:AddChild(self.prof.showInInstance)
 
-        if prof.name == addonTable.Locales.FISHING then
-            self.displayFishing = AceGUI:Create("CheckBox")
-            self.displayFishing.message = {
-                name = addonTable.Locales.DISPLAY_FISHING,
-                description = addonTable.Locales.DISPLAY_FISHING_SUB
-            }
-            self.displayFishing:SetFullWidth(true)
-            self.displayFishing:SetLabel(addonTable.Locales.DISPLAY_FISHING)
-            self.displayFishing:SetValue(prof.display)
-            self.displayFishing:SetCallback("OnValueChanged", function(_, _, value)
-                if not prof then prof = {} end
-                prof.display = value
-                addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
-                addonTable.MainFrame.UpdateUI()
-            end)
-            self.displayFishing:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
-            self.displayFishing:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
-            profContainer:AddChild(self.displayFishing)
-        end
+        -- Show in rest zone
+        self.prof.displayInRestZone = AceGUI:Create("CheckBox")
+        self.prof.displayInRestZone.message = {
+            name = L.DISPLAY_IN_REPO_ZONE,
+            description = L.DISPLAY_IN_REPO_ZONE_SUB
+        }
+        self.prof.displayInRestZone:SetFullWidth(true)
+        self.prof.displayInRestZone:SetLabel(L.DISPLAY_IN_REPO_ZONE)
+        self.prof.displayInRestZone:SetValue(p.showInRestingZone)
+        self.prof.displayInRestZone:SetCallback("OnValueChanged", function(_, _, value)
+            if not p then p = {} end
+            p.showInRestingZone = value
+            addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+            addonTable.MainFrame.UpdateUI()
+        end)
+        self.prof.displayInRestZone:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.prof.displayInRestZone:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+        profContainer:AddChild(self.prof.displayInRestZone)
+
+        -- Show in combat
+        self.prof.showInCombat = AceGUI:Create("CheckBox")
+        self.prof.showInCombat.message = {
+            name = L.SHOW_IN_COMBAT,
+            description = L.SHOW_IN_COMBAT_SUB
+        }
+        self.prof.showInCombat:SetFullWidth(true)
+        self.prof.showInCombat:SetLabel(L.SHOW_IN_COMBAT)
+        self.prof.showInCombat:SetValue(p.showDuringCombat)
+        self.prof.showInCombat:SetCallback("OnValueChanged", function(_, _, value)
+            if not p then p = {} end
+            p.showDuringCombat = value
+            addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
+            addonTable.MainFrame.UpdateUI()
+        end)
+        self.prof.showInCombat:SetCallback("OnEnter", addonTable.Components.OptionOnMouseOver)
+        self.prof.showInCombat:SetCallback("OnLeave", addonTable.Components.OptionOnMouseLeave)
+        profContainer:AddChild(self.prof.showInCombat)
+
         local iconSizeGroup = AceGUI:Create("SimpleGroup")
         iconSizeGroup:SetFullWidth(true)
         iconSizeGroup:SetLayout("Flow")
         local iconSizeLabel = AceGUI:Create("Label")
-        iconSizeLabel:SetText(addonTable.Locales.ICON_SIZE)
+        iconSizeLabel:SetText(L.ICON_SIZE)
         iconSizeGroup:AddChild(iconSizeLabel)
         self.prof.iconWidthSlider = AceGUI:Create("Slider")
         self.prof.iconWidthSlider:SetWidth(150)
         self.prof.iconWidthSlider:SetSliderValues(16, 64, 1)
-        self.prof.iconWidthSlider:SetLabel(addonTable.Locales.WIDTH)
-        self.prof.iconWidthSlider:SetValue(prof.icon_width or addonTable.Config.Get(addonTable.Config.Options.ICON_WIDTH))
+        self.prof.iconWidthSlider:SetLabel(L.WIDTH)
+        self.prof.iconWidthSlider:SetValue(p.icon_width or addonTable.Config.Get(addonTable.Config.Options.ICON_WIDTH))
         self.prof.iconWidthSlider:SetCallback("OnMouseUp", function(_,_, value)
-            if not prof then prof = {} end
-            prof.icon_width = value
+            if not p then p = {} end
+            p.icon_width = value
             addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
             addonTable.MainFrame.UpdateUI()
         end)
@@ -193,11 +241,11 @@ function panel:SetupGeneral()
         self.prof.iconHeightSlider = AceGUI:Create("Slider")
         self.prof.iconHeightSlider:SetWidth(150)
         self.prof.iconHeightSlider:SetSliderValues(16, 64, 1)
-        self.prof.iconHeightSlider:SetLabel(addonTable.Locales.HEIGHT)
-        self.prof.iconHeightSlider:SetValue(prof.icon_height or addonTable.Config.Get(addonTable.Config.Options.ICON_HEIGHT))
+        self.prof.iconHeightSlider:SetLabel(L.HEIGHT)
+        self.prof.iconHeightSlider:SetValue(p.icon_height or addonTable.Config.Get(addonTable.Config.Options.ICON_HEIGHT))
         self.prof.iconHeightSlider:SetCallback("OnMouseUp", function(_,_, value)
-            if not prof then prof = {} end
-            prof.icon_height = value
+            if not p then p = {} end
+            p.icon_height = value
             addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
             addonTable.MainFrame.UpdateUI()
         end)
@@ -205,7 +253,7 @@ function panel:SetupGeneral()
         profContainer:AddChild(iconSizeGroup)
         
         -- Low Threshold input for this profession
-        local profLowContainer = addonTable.Components.GetLowThresholdAndColorPickerGroup(self, prof)
+        local profLowContainer = addonTable.Components.GetLowThresholdAndColorPickerGroup(self, p)
         profContainer:AddChild(profLowContainer)
 
         -- Median Threshold Color for this profession
@@ -216,13 +264,13 @@ function panel:SetupGeneral()
         profMedContainer:AddChild(addonTable.Components.GetHSpace(177)) -- space before threshold label + threshold label width + edit box width + space after editbox
         
         self.prof.medColorFrame = AceGUI:Create("ColorPicker")
-        local med_color = prof.medium_color or addonTable.Config.Get(addonTable.Config.Options.MEDIUM_THRESHOLD_COLOR)
-        self.prof.medColorFrame:SetLabel(addonTable.Locales.MEDIUM_COLOR)
+        local med_color = p.medium_color or addonTable.Config.Get(addonTable.Config.Options.MEDIUM_THRESHOLD_COLOR)
+        self.prof.medColorFrame:SetLabel(L.MEDIUM_COLOR)
         self.prof.medColorFrame:SetColor(med_color.r, med_color.g, med_color.b, med_color.a)
         self.prof.medColorFrame:SetCallback("OnValueChanged",  function(_, _, newr, newg, newb, newa)
-            if not prof then prof = {} end
-            if prof.medium_color ~= nil and prof.medium_color == {r = newr, g = newg, b = newb, a = newa} then return end
-            prof.medium_color = {r = newr, g = newg, b = newb, a = newa}
+            if not p then p = {} end
+            if p.medium_color ~= nil and p.medium_color == {r = newr, g = newg, b = newb, a = newa} then return end
+            p.medium_color = {r = newr, g = newg, b = newb, a = newa}
             addonTable.Config.Set(addonTable.Config.Options.PROFESSIONS, professionsConfig)
             addonTable.MainFrame.UpdateUI()
         end)
@@ -230,7 +278,7 @@ function panel:SetupGeneral()
         profContainer:AddChild(profMedContainer)
 
         -- High Threshold input for this profession
-        local profHighContainer = addonTable.Components.GetHighThresholdAndColorPickerGroup(self, prof)
+        local profHighContainer = addonTable.Components.GetHighThresholdAndColorPickerGroup(self, p)
         profContainer:AddChild(profHighContainer)
 
         local profSeparator = AceGUI:Create("Heading")
@@ -255,10 +303,7 @@ function panel.refresh()
         end
 
         local professionsConfig = addonTable.Config.Get(addonTable.Config.Options.PROFESSIONS)
-        panel.showInInstance:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_INSTANCES))
         panel.showTotal:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_TOTAL))
-        panel.displayInRestZone:SetValue(addonTable.Config.Get(addonTable.Config.Options.DISPLAY_IN_REPO_ZONE))
-        panel.showInCombat:SetValue(addonTable.Config.Get(addonTable.Config.Options.SHOW_IN_COMBAT))
         panel.iconPerRowSlider:SetValue(addonTable.Config.Get(addonTable.Config.Options.ROW_AMOUNT))
         for _, prof in ipairs(professionsConfig) do
             if panel.prof.iconWidthSlider then
@@ -294,13 +339,13 @@ function panel.refresh()
                 end
                 panel.prof.highColorFrame:SetColor(high_color.r, high_color.g, high_color.b, high_color.a)
             end
-            if panel.prof.displayFishing and prof ~= nil and prof.name == addonTable.Locales.FISHING then
+            if panel.prof.displayFishing and prof ~= nil and prof.current_profession == addonTable.Constants.FISHING then
                 panel.prof.displayFishing:SetValue(prof.display or true)
             end
         end
     end, geterrorhandler())
 end
 
-local category, layout = Settings.RegisterCanvasLayoutSubcategory(addonTable.OptionDialog.ABOUT.category, panel.frame, addonTable.Locales.GENERAL)
+local category, layout = Settings.RegisterCanvasLayoutSubcategory(addonTable.OptionDialog.ABOUT.category, panel.frame, L.GENERAL)
 addonTable.OptionDialog.GENERAL.category = category
 addonTable.OptionDialog.GENERAL.layout = layout
